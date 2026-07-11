@@ -2,7 +2,7 @@ const translations = {
   uk: {
     lang: 'uk',
     title: 'Technical Engineer',
-    description: 'Євгеній Кофан — Technical Engineer, Drone Systems, Embedded Systems, Electronics, Technical Project Manager та R&D.',
+    description: 'Technical Engineer, Drone Systems, Embedded Systems, Electronics, Technical Project Manager та R&D.',
     labels: {
       '.brand': 'На початок сторінки',
       '.nav': 'Основна навігація',
@@ -10,7 +10,7 @@ const translations = {
       '.language-switch': 'Перемикач мови'
     },
     text: {
-      '.brand strong': 'Євгеній Кофан',
+      '.brand strong': '',
       '.nav a:nth-child(1)': 'Профіль',
       '.nav a:nth-child(2)': 'Навички',
       '.nav a:nth-child(3)': 'Досвід',
