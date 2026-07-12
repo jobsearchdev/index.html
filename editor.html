@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#07111f">
+  <title>Редактор сайту — Євгеній Кофан</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body class="editor-page">
+  <div class="grid-bg" aria-hidden="true"></div>
+  <header class="editor-header">
+    <div>
+      <p class="section-kicker">Site editor</p>
+      <h1>Редактор сайту</h1>
+    </div>
+    <div class="editor-header-actions">
+      <a class="button button-ghost" href="index.html" target="_blank" rel="noopener">Відкрити сайт</a>
+      <button class="button" id="publishButton" type="button" disabled>Опублікувати на GitHub</button>
+    </div>
+  </header>
+
+  <main class="editor-layout">
+    <aside class="editor-sidebar">
+      <section class="editor-panel">
+        <h2>GitHub</h2>
+        <label>Fine-grained token
+          <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+        </label>
+        <div class="two-columns">
+          <label>Власник
+            <input id="owner" type="text" autocomplete="off" placeholder="username">
+          </label>
+          <label>Репозиторій
+            <input id="repo" type="text" autocomplete="off" placeholder="portfolio">
+          </label>
+        </div>
+        <label>Гілка
+          <input id="branch" type="text" value="main" autocomplete="off">
+        </label>
+        <label>Шлях до сайту в репозиторії
+          <input id="basePath" type="text" autocomplete="off" placeholder="залиште порожнім для кореня">
+        </label>
+        <button class="button button-wide" id="connectButton" type="button">Підключитися та завантажити</button>
+        <p class="editor-note">Токен зберігається тільки в поточній вкладці браузера і видаляється після її закриття.</p>
+      </section>
+
+      <section class="editor-panel">
+        <h2>Редагування</h2>
+        <label>Мова
+          <select id="languageSelect">
+            <option value="uk">Українська</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <label>Пошук поля
+          <input id="searchFields" type="search" placeholder="Наприклад: досвід">
+        </label>
+        <div class="editor-actions-stack">
+          <button class="button button-ghost button-wide" id="loadLocalButton" type="button">Завантажити локальні JSON</button>
+          <button class="button button-ghost button-wide" id="downloadButton" type="button">Завантажити JSON</button>
+          <button class="button button-ghost button-wide" id="resetButton" type="button">Скасувати незбережені зміни</button>
+        </div>
+      </section>
+
+      <section class="editor-panel editor-status-panel" aria-live="polite">
+        <h2>Статус</h2>
+        <p id="statusText">Завантажте локальні файли або підключіться до GitHub.</p>
+      </section>
+    </aside>
+
+    <section class="editor-workspace">
+      <div class="workspace-toolbar">
+        <div>
+          <p class="section-kicker" id="currentLanguageLabel">Українська</p>
+          <h2>Текст сайту</h2>
+        </div>
+        <span id="dirtyIndicator" class="dirty-indicator">Без змін</span>
+      </div>
+      <div id="fieldsContainer" class="fields-container">
+        <div class="empty-editor-state">
+          <p>Натисніть «Завантажити локальні JSON», щоб почати редагування.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="editor.js"></script>
+</body>
+</html>
