@@ -7,13 +7,13 @@
   <meta name="theme-color" content="#07111f">
   <title>Редактор сайту — Євгеній Кофан</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="editor.css">
+  <link rel="stylesheet" href="editor.css?v=20260712-3">
 </head>
 <body class="editor-page">
   <div class="grid-bg" aria-hidden="true"></div>
   <header class="editor-header">
     <div>
-      <p class="section-kicker">Site editor</p>
+      <p class="section-kicker">GitHub site editor</p>
       <h1>Редактор сайту</h1>
     </div>
     <div class="editor-header-actions">
@@ -25,16 +25,17 @@
   <main class="editor-layout">
     <aside class="editor-sidebar">
       <section class="editor-panel">
-        <h2>GitHub</h2>
+        <h2>Підключення до GitHub</h2>
+        <p class="connection-info" id="connectionInfo">Не підключено</p>
         <label>Fine-grained token
           <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
         </label>
         <div class="two-columns">
           <label>Власник
-            <input id="owner" type="text" autocomplete="off" placeholder="username">
+            <input id="owner" type="text" autocomplete="off" placeholder="jobsearchdev">
           </label>
           <label>Репозиторій
-            <input id="repo" type="text" autocomplete="off" placeholder="portfolio">
+            <input id="repo" type="text" autocomplete="off" placeholder="index.html">
           </label>
         </div>
         <label>Гілка
@@ -44,7 +45,8 @@
           <input id="basePath" type="text" autocomplete="off" placeholder="залиште порожнім для кореня">
         </label>
         <button class="button button-wide" id="connectButton" type="button">Підключитися та завантажити</button>
-        <p class="editor-note">Токен зберігається тільки в поточній вкладці браузера і видаляється після її закриття.</p>
+        <p class="editor-note">Для вашої структури: owner <strong>jobsearchdev</strong>, repository <strong>index.html</strong>, branch <strong>main</strong>, шлях — порожній.</p>
+        <p class="editor-note">Токен зберігається лише до закриття вкладки. Потрібен дозвіл <strong>Contents: Read and write</strong>.</p>
       </section>
 
       <section class="editor-panel">
@@ -61,13 +63,14 @@
         <div class="editor-actions-stack">
           <button class="button button-ghost button-wide" id="loadLocalButton" type="button">Завантажити локальні JSON</button>
           <button class="button button-ghost button-wide" id="downloadButton" type="button">Завантажити JSON</button>
-          <button class="button button-ghost button-wide" id="resetButton" type="button">Скасувати незбережені зміни</button>
+          <button class="button button-ghost button-wide" id="resetButton" type="button">Скасувати зміни</button>
         </div>
       </section>
 
       <section class="editor-panel editor-status-panel" aria-live="polite">
         <h2>Статус</h2>
-        <p id="statusText">Завантажте локальні файли або підключіться до GitHub.</p>
+        <p id="statusText">Вставте token і натисніть «Підключитися та завантажити».</p>
+        <button class="button button-ghost button-wide diagnostics-button" id="copyDiagnosticsButton" type="button" disabled>Скопіювати діагностику</button>
       </section>
     </aside>
 
@@ -81,12 +84,12 @@
       </div>
       <div id="fieldsContainer" class="fields-container">
         <div class="empty-editor-state">
-          <p>Натисніть «Завантажити локальні JSON», щоб почати редагування.</p>
+          <p>Підключіться до GitHub або завантажте локальні JSON.</p>
         </div>
       </div>
     </section>
   </main>
 
-  <script src="editor.js?v=20260712-2"></script>
+  <script src="editor.js?v=20260712-3"></script>
 </body>
 </html>
