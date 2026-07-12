@@ -82,7 +82,7 @@ function refreshDirtyState() {
   const dirty = isDirty();
   elements.dirty.textContent = dirty ? 'Є незбережені зміни' : 'Без змін';
   elements.dirty.classList.toggle('is-dirty', dirty);
-  elements.publish.disabled = state.source !== 'github' || !dirty;
+  elements.publish.disabled = !dirty;
 }
 function fieldLabel(path) {
   if (path.startsWith('text.')) return path.slice(5);
@@ -160,9 +160,10 @@ async function loadFromGitHub() {
     elements.connect.disabled = true;
     setStatus('Завантаження файлів із GitHub…');
     for (const language of LANGUAGES) {
-      const response = await fetch(`${endpoint(language)}?ref=${encodeURIComponent(elements.branch.value.trim())}`, { headers: apiHeaders() });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || `Не вдалося завантажити ${filePath(language)}.`);
+      const payload = await githubRequest(
+        `${endpoint(language)}?ref=${encodeURIComponent(elements.branch.value.trim())}`,
+        { headers: apiHeaders() }
+      );
       const parsed = JSON.parse(base64ToUtf8(payload.content));
       state.data[language] = parsed; state.originals[language] = deepClone(parsed); state.shas[language] = payload.sha;
     }
@@ -171,17 +172,57 @@ async function loadFromGitHub() {
   } catch (error) { setStatus(error.message, 'error'); }
   finally { elements.connect.disabled = false; }
 }
+async function githubRequest(url, options = {}) {
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (_) {
+    throw new Error('Не вдалося з’єднатися з GitHub API. Перевірте інтернет, блокувальники та відкрийте редактор через GitHub Pages або локальний сервер.');
+  }
+
+  let payload = {};
+  try { payload = await response.json(); } catch (_) {}
+
+  if (!response.ok) {
+    const accepted = response.headers.get('x-accepted-github-permissions');
+    const details = [];
+    if (response.status === 401) details.push('Токен недійсний або прострочений.');
+    if (response.status === 403) details.push('Токен не має права Contents: Read and write або доступ до репозиторію обмежено.');
+    if (response.status === 404) details.push('Не знайдено репозиторій, гілку або файл. Перевірте власника, назву репозиторію, гілку та шлях.');
+    if (response.status === 409) details.push('Конфлікт версій. Дані на GitHub змінилися; повторіть публікацію.');
+    if (response.status === 422) details.push('GitHub відхилив зміни. Можливо, гілка захищена правилами.');
+    if (accepted) details.push(`GitHub очікує дозволи: ${accepted}.`);
+    throw new Error(`${payload.message || `GitHub API: ${response.status}`} ${details.join(' ')}`.trim());
+  }
+  return payload;
+}
+
+async function getRemoteFile(language) {
+  const url = `${endpoint(language)}?ref=${encodeURIComponent(elements.branch.value.trim())}`;
+  try {
+    return await githubRequest(url, { headers: apiHeaders() });
+  } catch (error) {
+    if (error.message.includes('Не знайдено репозиторій, гілку або файл')) return null;
+    throw error;
+  }
+}
+
 async function updateGitHubFile(language) {
-  const content = `${JSON.stringify(state.data[language], null, 2)}\n`;
+  const content = `${JSON.stringify(state.data[language], null, 2)}
+`;
+  const remote = await getRemoteFile(language);
   const body = {
     message: `Update ${language.toUpperCase()} website content`,
     content: utf8ToBase64(content),
-    branch: elements.branch.value.trim(),
-    sha: state.shas[language]
+    branch: elements.branch.value.trim()
   };
-  const response = await fetch(endpoint(language), { method: 'PUT', headers: apiHeaders(), body: JSON.stringify(body) });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.message || `Не вдалося опублікувати ${filePath(language)}.`);
+  if (remote?.sha) body.sha = remote.sha;
+
+  const payload = await githubRequest(endpoint(language), {
+    method: 'PUT',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  });
   state.shas[language] = payload.content.sha;
   state.originals[language] = deepClone(state.data[language]);
 }
@@ -196,7 +237,8 @@ async function publishChanges() {
       await updateGitHubFile(language);
     }
     renderFields();
-    setStatus('Зміни успішно опубліковано на GitHub. GitHub Pages оновиться після нового deployment.', 'success');
+    state.source = 'github';
+    setStatus('Зміни успішно опубліковано на GitHub. GitHub Pages оновиться після завершення deployment.', 'success');
   } catch (error) {
     setStatus(`${error.message} Оновіть дані з GitHub перед повторною спробою, якщо файл уже змінився.`, 'error');
   } finally { refreshDirtyState(); }
