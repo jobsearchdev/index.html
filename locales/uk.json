@@ -9,7 +9,7 @@
     ".language-switch": "Перемикач мови"
   },
   "text": {
-    ".brand strong": "ЄК",
+    ".brand strong": "",
     ".nav a:nth-child(1)": "Профіль",
     ".nav a:nth-child(2)": "Навички",
     ".nav a:nth-child(3)": "Досвід",
