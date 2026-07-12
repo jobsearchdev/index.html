@@ -9,7 +9,7 @@
     ".language-switch": "Перемикач мови"
   },
   "text": {
-    ".brand strong": "Євгеній Кофан",
+    ".brand strong": "ЄК",
     ".nav a:nth-child(1)": "Профіль",
     ".nav a:nth-child(2)": "Навички",
     ".nav a:nth-child(3)": "Досвід",
@@ -27,7 +27,7 @@
     ".hero-panel h2": "Поточний фокус",
     ".focus-list li:nth-child(1)": "Drone systems та FPV",
     ".focus-list li:nth-child(2)": "Embedded / electronics",
-    ".focus-list li:nth-child(3)": "Linux / infrastructure",
+    ".focus-list li:nth-child(3)": "Linux",
     ".focus-list li:nth-child(4)": "Automation / AI",
     ".focus-list li:nth-child(5)": "Technical project management",
     ".focus-list li:nth-child(6)": "R&D та прототипування",
@@ -74,7 +74,7 @@
     ".contact .section-kicker": "Контакт",
     ".contact h2": "Готовий посилити технічну команду",
     ".contact > p:not(.section-kicker)": "Віддалена робота · ФОП 2 група · довгострокові проєкти",
-    "footer p": "© <span id=\"year\"></span> Євгеній Кофан",
+    "footer p": "© <span id=\"year\"></span> ЄК",
     "footer a": "На початок ↑"
   }
 }
