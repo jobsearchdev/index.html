@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#07111f">
   <title>Редактор сайту — Євгеній Кофан</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="editor.css?v=20260712-4">
+  <link rel="stylesheet" href="editor.css?v=20260712-5">
 </head>
 <body class="editor-page">
   <div class="grid-bg" aria-hidden="true"></div>
@@ -51,6 +51,11 @@
 
       <section class="editor-panel">
         <h2>Редагування</h2>
+        <div class="editor-mode-switch" role="tablist" aria-label="Режим редактора">
+          <button class="button button-ghost is-active" id="textModeButton" type="button" role="tab" aria-selected="true">Тексти</button>
+          <button class="button button-ghost" id="blocksModeButton" type="button" role="tab" aria-selected="false">Блоки index.html</button>
+        </div>
+        <div id="textControls">
         <label>Мова
           <select id="languageSelect">
             <option value="uk">Українська</option>
@@ -60,9 +65,14 @@
         <label>Пошук поля
           <input id="searchFields" type="search" placeholder="Наприклад: досвід">
         </label>
+        </div>
+        <div id="blocksControls" hidden>
+          <p class="editor-note">Редагуйте HTML секцій, змінюйте порядок або додавайте нові блоки. Некоректний HTML може порушити сторінку.</p>
+          <button class="button button-ghost button-wide" id="addBlockButton" type="button">Додати новий блок</button>
+        </div>
         <div class="editor-actions-stack">
-          <button class="button button-ghost button-wide" id="loadLocalButton" type="button">Завантажити локальні JSON</button>
-          <button class="button button-ghost button-wide" id="downloadButton" type="button">Завантажити JSON</button>
+          <button class="button button-ghost button-wide" id="loadLocalButton" type="button">Завантажити локальні файли</button>
+          <button class="button button-ghost button-wide" id="downloadButton" type="button">Завантажити поточний файл</button>
           <button class="button button-ghost button-wide" id="resetButton" type="button">Скасувати зміни</button>
         </div>
       </section>
@@ -78,7 +88,7 @@
       <div class="workspace-toolbar">
         <div>
           <p class="section-kicker" id="currentLanguageLabel">Українська</p>
-          <h2>Текст сайту</h2>
+          <h2 id="workspaceTitle">Текст сайту</h2>
         </div>
         <span id="dirtyIndicator" class="dirty-indicator">Без змін</span>
       </div>
@@ -90,6 +100,6 @@
     </section>
   </main>
 
-  <script src="editor.js?v=20260712-4"></script>
+  <script src="editor.js?v=20260712-5"></script>
 </body>
 </html>

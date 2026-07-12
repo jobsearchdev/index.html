@@ -7,7 +7,11 @@ const state = {
   connected: false,
   account: null,
   repo: null,
-  lastDiagnostics: ''
+  lastDiagnostics: '',
+  mode: 'text',
+  indexHtml: null,
+  indexOriginal: null,
+  blocks: []
 };
 
 const elements = {
@@ -29,7 +33,13 @@ const elements = {
   dirty: document.getElementById('dirtyIndicator'),
   languageLabel: document.getElementById('currentLanguageLabel'),
   connectionInfo: document.getElementById('connectionInfo'),
-  copyDiagnostics: document.getElementById('copyDiagnosticsButton')
+  copyDiagnostics: document.getElementById('copyDiagnosticsButton'),
+  textMode: document.getElementById('textModeButton'),
+  blocksMode: document.getElementById('blocksModeButton'),
+  textControls: document.getElementById('textControls'),
+  blocksControls: document.getElementById('blocksControls'),
+  addBlock: document.getElementById('addBlockButton'),
+  workspaceTitle: document.getElementById('workspaceTitle')
 };
 
 function deepClone(value) {
@@ -66,6 +76,14 @@ function validateConfig({ token, owner, repo, branch }) {
   if (!owner) throw new Error('Вкажіть власника репозиторію.');
   if (!repo) throw new Error('Вкажіть назву репозиторію.');
   if (!branch) throw new Error('Вкажіть гілку.');
+}
+
+function indexFilePath(config = getConfig()) {
+  return [config.basePath, 'index.html'].filter(Boolean).join('/');
+}
+
+function indexEndpoint(config = getConfig()) {
+  return `${repoApiBase(config)}/contents/${encodePath(indexFilePath(config))}`;
 }
 
 function filePath(language, config = getConfig()) {
@@ -177,8 +195,12 @@ function setByKeys(object, keys, value) {
   target[keys.at(-1)] = value;
 }
 
+function isIndexDirty() {
+  return state.indexHtml !== null && state.indexHtml !== state.indexOriginal;
+}
+
 function isDirty() {
-  return LANGUAGES.some(language => state.data[language] && JSON.stringify(state.data[language]) !== JSON.stringify(state.originals[language]));
+  return isIndexDirty() || LANGUAGES.some(language => state.data[language] && JSON.stringify(state.data[language]) !== JSON.stringify(state.originals[language]));
 }
 
 function refreshDirtyState() {
@@ -194,6 +216,134 @@ function fieldLabel(keys) {
   return keys.join(' → ');
 }
 
+
+
+function parseIndexBlocks(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const blocks = [];
+  const header = doc.querySelector('body > header');
+  const main = doc.querySelector('body > main');
+  const footer = doc.querySelector('body > footer');
+  if (header) blocks.push({ kind: 'header', label: 'Header', html: header.outerHTML });
+  if (main) {
+    [...main.children].forEach((node, index) => {
+      const id = node.id ? `#${node.id}` : '';
+      const classes = [...node.classList].slice(0, 2).map(c => `.${c}`).join('');
+      blocks.push({ kind: 'main', label: `Секція ${index + 1} ${id || classes}`.trim(), html: node.outerHTML });
+    });
+  }
+  if (footer) blocks.push({ kind: 'footer', label: 'Footer', html: footer.outerHTML });
+  state.blocks = blocks;
+}
+
+function rebuildIndexHtml() {
+  if (!state.indexHtml) return;
+  const doc = new DOMParser().parseFromString(state.indexHtml, 'text/html');
+  const body = doc.body;
+  const oldHeader = body.querySelector(':scope > header');
+  const oldMain = body.querySelector(':scope > main');
+  const oldFooter = body.querySelector(':scope > footer');
+  const parseNode = html => {
+    const temp = document.createElement('template');
+    temp.innerHTML = html.trim();
+    return temp.content.firstElementChild;
+  };
+  const headerBlock = state.blocks.find(b => b.kind === 'header');
+  const footerBlock = state.blocks.find(b => b.kind === 'footer');
+  const mainBlocks = state.blocks.filter(b => b.kind === 'main');
+  if (headerBlock && oldHeader) oldHeader.replaceWith(parseNode(headerBlock.html));
+  if (oldMain) {
+    oldMain.replaceChildren(...mainBlocks.map(b => parseNode(b.html)));
+  }
+  if (footerBlock && oldFooter) oldFooter.replaceWith(parseNode(footerBlock.html));
+  state.indexHtml = `<!doctype html>\n${doc.documentElement.outerHTML}\n`;
+}
+
+function validateBlockHtml(block) {
+  const template = document.createElement('template');
+  template.innerHTML = block.html.trim();
+  const elements = [...template.content.children];
+  if (elements.length !== 1) return 'Блок повинен містити рівно один кореневий HTML-елемент.';
+  const expected = block.kind === 'main' ? 'SECTION' : block.kind.toUpperCase();
+  if (elements[0].tagName !== expected) return `Очікується кореневий тег <${expected.toLowerCase()}>.`;
+  return '';
+}
+
+function renderBlocks() {
+  elements.fields.innerHTML = '';
+  elements.languageLabel.textContent = 'INDEX.HTML';
+  elements.workspaceTitle.textContent = 'Блоки сторінки';
+  if (!state.indexHtml) {
+    elements.fields.innerHTML = '<div class="empty-editor-state"><p>Підключіться до GitHub або завантажте локальні файли.</p></div>';
+    refreshDirtyState();
+    return;
+  }
+  state.blocks.forEach((block, index) => {
+    const card = document.createElement('article');
+    card.className = 'block-card';
+    const header = document.createElement('div');
+    header.className = 'block-card-header';
+    const titleWrap = document.createElement('div');
+    const title = document.createElement('h3'); title.className = 'block-card-title'; title.textContent = block.label;
+    const type = document.createElement('div'); type.className = 'block-type'; type.textContent = block.kind;
+    titleWrap.append(title, type);
+    const actions = document.createElement('div'); actions.className = 'block-card-actions';
+    const makeButton = (label, handler, disabled=false) => { const b=document.createElement('button'); b.className='button button-ghost'; b.type='button'; b.textContent=label; b.disabled=disabled; b.addEventListener('click',handler); return b; };
+    actions.append(
+      makeButton('↑', () => moveBlock(index, -1), index === 0 || block.kind !== 'main' || state.blocks[index-1]?.kind !== 'main'),
+      makeButton('↓', () => moveBlock(index, 1), index === state.blocks.length-1 || block.kind !== 'main' || state.blocks[index+1]?.kind !== 'main'),
+      makeButton('Дублювати', () => duplicateBlock(index), block.kind !== 'main'),
+      makeButton('Видалити', () => deleteBlock(index), block.kind !== 'main')
+    );
+    header.append(titleWrap, actions);
+    const textarea = document.createElement('textarea');
+    textarea.value = block.html;
+    const error = document.createElement('p'); error.className='block-error'; error.hidden=true;
+    textarea.addEventListener('input', () => {
+      block.html = textarea.value;
+      const message = validateBlockHtml(block);
+      card.classList.toggle('is-invalid', Boolean(message));
+      error.hidden = !message; error.textContent = message;
+      if (!message) { rebuildIndexHtml(); refreshDirtyState(); }
+    });
+    card.append(header, textarea, error);
+    elements.fields.append(card);
+  });
+  refreshDirtyState();
+}
+
+function moveBlock(index, delta) {
+  const target = index + delta;
+  [state.blocks[index], state.blocks[target]] = [state.blocks[target], state.blocks[index]];
+  rebuildIndexHtml(); renderBlocks();
+}
+function duplicateBlock(index) {
+  const clone = { ...state.blocks[index], label: `${state.blocks[index].label} (копія)` };
+  state.blocks.splice(index + 1, 0, clone); rebuildIndexHtml(); renderBlocks();
+}
+function deleteBlock(index) {
+  if (!confirm('Видалити цей блок зі сторінки?')) return;
+  state.blocks.splice(index, 1); rebuildIndexHtml(); renderBlocks();
+}
+function addBlock() {
+  const footerIndex = state.blocks.findIndex(b => b.kind === 'footer');
+  const number = state.blocks.filter(b => b.kind === 'main').length + 1;
+  const block = { kind: 'main', label: `Нова секція ${number}`, html: `<section class="section section-shell" id="new-section-${number}">\n  <div>\n    <p class="section-kicker">Новий блок</p>\n    <h2>Заголовок нового блоку</h2>\n    <p>Додайте свій HTML-контент.</p>\n  </div>\n</section>` };
+  state.blocks.splice(footerIndex >= 0 ? footerIndex : state.blocks.length, 0, block); rebuildIndexHtml(); renderBlocks();
+}
+
+function setEditorMode(mode) {
+  state.mode = mode;
+  const text = mode === 'text';
+  elements.textMode.classList.toggle('is-active', text);
+  elements.blocksMode.classList.toggle('is-active', !text);
+  elements.textMode.setAttribute('aria-selected', String(text));
+  elements.blocksMode.setAttribute('aria-selected', String(!text));
+  elements.textControls.hidden = !text;
+  elements.blocksControls.hidden = text;
+  elements.search.disabled = !text;
+  if (text) { elements.workspaceTitle.textContent='Текст сайту'; renderFields(); } else renderBlocks();
+}
 
 function renderFields() {
   const language = elements.language.value;
@@ -296,6 +446,13 @@ async function verifyConnection(config) {
   return { account, repo };
 }
 
+async function loadIndexFromGitHub(config) {
+  const path = indexFilePath(config);
+  const payload = await githubRequest(`${indexEndpoint(config)}?ref=${encodeURIComponent(config.branch)}`, {}, `завантажити ${path}`, config);
+  if (payload.type !== 'file' || !payload.content) throw new Error(`${path} не є звичайним HTML-файлом.`);
+  return base64ToUtf8(payload.content);
+}
+
 async function loadLanguageFromGitHub(language, config) {
   const url = `${contentEndpoint(language, config)}?ref=${encodeURIComponent(config.branch)}`;
   const payload = await githubRequest(url, {}, `завантажити ${filePath(language, config)}`, config);
@@ -317,9 +474,10 @@ async function connectAndLoad() {
 
     const { account, repo } = await verifyConnection(config);
     setStatus('Завантажую український та англійський файли…');
-    const [uk, en] = await Promise.all([
+    const [uk, en, indexHtml] = await Promise.all([
       loadLanguageFromGitHub('uk', config),
-      loadLanguageFromGitHub('en', config)
+      loadLanguageFromGitHub('en', config),
+      loadIndexFromGitHub(config)
     ]);
 
     state.account = account;
@@ -328,12 +486,15 @@ async function connectAndLoad() {
     state.data.en = en;
     state.originals.uk = deepClone(uk);
     state.originals.en = deepClone(en);
+    state.indexHtml = indexHtml;
+    state.indexOriginal = indexHtml;
+    parseIndexBlocks(indexHtml);
     state.connected = true;
     persistSettings(config);
 
     elements.connectionInfo.textContent = `${account.login} → ${config.owner}/${config.repo} · ${config.branch}`;
-    renderFields();
-    setStatus(`Підключено. Файли locales/uk.json та locales/en.json завантажено.`, 'success');
+    state.mode === 'text' ? renderFields() : renderBlocks();
+    setStatus(`Підключено. Мовні файли та index.html завантажено.`, 'success');
   } catch (error) {
     state.connected = false;
     elements.connectionInfo.textContent = 'Не підключено';
@@ -347,14 +508,18 @@ async function connectAndLoad() {
 async function loadLocalFiles() {
   try {
     setStatus('Завантажую локальні мовні файли…');
-    const responses = await Promise.all(LANGUAGES.map(language => fetch(`locales/${language}.json`, { cache: 'no-store' })));
+    const responses = await Promise.all([
+      ...LANGUAGES.map(language => fetch(`locales/${language}.json`, { cache: 'no-store' })),
+      fetch('index.html', { cache: 'no-store' })
+    ]);
     if (responses.some(response => !response.ok)) throw new Error('Не вдалося відкрити локальні JSON. Відкрийте редактор через GitHub Pages або локальний сервер.');
-    const [uk, en] = await Promise.all(responses.map(response => response.json()));
+    const [uk, en, indexHtml] = await Promise.all([responses[0].json(), responses[1].json(), responses[2].text()]);
     state.data.uk = uk;
     state.data.en = en;
     state.originals.uk = deepClone(uk);
     state.originals.en = deepClone(en);
-    renderFields();
+    state.indexHtml = indexHtml; state.indexOriginal = indexHtml; parseIndexBlocks(indexHtml);
+    state.mode === 'text' ? renderFields() : renderBlocks();
     setStatus(state.connected ? 'Локальні файли завантажено. Публікація піде в підключений репозиторій.' : 'Локальні файли завантажено. Для публікації підключіться до GitHub.', 'success');
   } catch (error) {
     setStatus(error.message, 'error');
@@ -386,6 +551,17 @@ async function publishLanguage(language, config) {
   state.originals[language] = deepClone(state.data[language]);
 }
 
+
+async function publishIndex(config) {
+  const current = await githubRequest(`${indexEndpoint(config)}?ref=${encodeURIComponent(config.branch)}`, {}, `прочитати актуальний ${indexFilePath(config)}`, config);
+  if (!current.sha) throw new Error(`GitHub не повернув SHA для ${indexFilePath(config)}.`);
+  await githubRequest(indexEndpoint(config), {
+    method: 'PUT',
+    body: JSON.stringify({ message: 'Update website page blocks', content: utf8ToBase64(state.indexHtml), branch: config.branch, sha: current.sha })
+  }, `опублікувати ${indexFilePath(config)}`, config);
+  state.indexOriginal = state.indexHtml;
+}
+
 async function publishChanges() {
   const config = getConfig();
   try {
@@ -393,20 +569,23 @@ async function publishChanges() {
     if (!state.connected) throw new Error('Спочатку натисніть «Підключитися та завантажити».');
 
     const changed = LANGUAGES.filter(language => state.data[language] && JSON.stringify(state.data[language]) !== JSON.stringify(state.originals[language]));
-    if (!changed.length) {
+    const indexChanged = isIndexDirty();
+    if (!changed.length && !indexChanged) {
       setStatus('Немає змін для публікації.');
       return;
     }
 
-    if (!confirm(`Опублікувати зміни: ${changed.map(language => language.toUpperCase()).join(', ')}?`)) return;
+    const changedLabels = [...changed.map(language => language.toUpperCase()), ...(indexChanged ? ['index.html'] : [])];
+    if (!confirm(`Опублікувати зміни: ${changedLabels.join(', ')}?`)) return;
 
     elements.publish.disabled = true;
+    if (indexChanged) { setStatus('Публікую index.html…'); await publishIndex(config); }
     for (const language of changed) {
       setStatus(`Публікую ${language.toUpperCase()}…`);
       await publishLanguage(language, config);
     }
 
-    renderFields();
+    state.mode === 'text' ? renderFields() : renderBlocks();
     setStatus('Зміни опубліковано. GitHub Pages оновиться після завершення deployment.', 'success');
   } catch (error) {
     setStatus(error.message, 'error');
@@ -416,20 +595,24 @@ async function publishChanges() {
 }
 
 function downloadCurrentLanguage() {
-  const language = elements.language.value;
-  if (!state.data[language]) {
-    setStatus('Немає даних для завантаження.', 'error');
+  if (state.mode === 'blocks') {
+    if (!state.indexHtml) return setStatus('Немає index.html для завантаження.', 'error');
+    const blob = new Blob([state.indexHtml], { type: 'text/html' });
+    const link = document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='index.html'; link.click(); URL.revokeObjectURL(link.href);
     return;
   }
+  const language = elements.language.value;
+  if (!state.data[language]) return setStatus('Немає даних для завантаження.', 'error');
   const blob = new Blob([`${JSON.stringify(state.data[language], null, 2)}\n`], { type: 'application/json' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `${language}.json`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  const link = document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=`${language}.json`; link.click(); URL.revokeObjectURL(link.href);
 }
 
 function resetChanges() {
+  if (state.mode === 'blocks') {
+    if (!state.indexOriginal) return;
+    if (!confirm('Скасувати незбережені зміни index.html?')) return;
+    state.indexHtml = state.indexOriginal; parseIndexBlocks(state.indexHtml); renderBlocks(); setStatus('Зміни index.html скасовано.'); return;
+  }
   const language = elements.language.value;
   if (!state.originals[language]) return;
   if (!confirm(`Скасувати незбережені зміни для ${language.toUpperCase()}?`)) return;
@@ -456,6 +639,9 @@ elements.download.addEventListener('click', downloadCurrentLanguage);
 elements.reset.addEventListener('click', resetChanges);
 elements.copyDiagnostics.addEventListener('click', copyDiagnostics);
 elements.language.addEventListener('change', renderFields);
+elements.textMode.addEventListener('click', () => setEditorMode('text'));
+elements.blocksMode.addEventListener('click', () => setEditorMode('blocks'));
+elements.addBlock.addEventListener('click', addBlock);
 elements.search.addEventListener('input', applySearch);
 window.addEventListener('beforeunload', event => {
   if (isDirty()) {
