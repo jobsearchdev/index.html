@@ -150,19 +150,30 @@ async function githubRequest(url, options = {}, action = 'виконати за�
   return payload;
 }
 
-function flattenObject(object, prefix = '', output = []) {
+function flattenObject(object, keys = [], output = []) {
   Object.entries(object).forEach(([key, value]) => {
-    const path = prefix ? `${prefix}.${key}` : key;
-    if (value && typeof value === 'object' && !Array.isArray(value)) flattenObject(value, path, output);
-    else output.push({ path, value: String(value ?? '') });
+    const nextKeys = [...keys, key];
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      flattenObject(value, nextKeys, output);
+    } else {
+      output.push({
+        keys: nextKeys,
+        displayPath: nextKeys.join(' → '),
+        value: String(value ?? '')
+      });
+    }
   });
   return output;
 }
 
-function setByPath(object, path, value) {
-  const keys = path.split('.');
+function setByKeys(object, keys, value) {
   let target = object;
-  for (const key of keys.slice(0, -1)) target = target[key];
+  for (const key of keys.slice(0, -1)) {
+    if (!target || typeof target !== 'object' || !(key in target)) {
+      throw new Error(`Не вдалося знайти поле: ${keys.join(' → ')}`);
+    }
+    target = target[key];
+  }
   target[keys.at(-1)] = value;
 }
 
@@ -177,11 +188,12 @@ function refreshDirtyState() {
   elements.publish.disabled = !dirty || !state.connected;
 }
 
-function fieldLabel(path) {
-  if (path.startsWith('text.')) return path.slice(5);
-  if (path.startsWith('labels.')) return `ARIA: ${path.slice(7)}`;
-  return path;
+function fieldLabel(keys) {
+  if (keys[0] === 'text') return keys.slice(1).join(' → ');
+  if (keys[0] === 'labels') return `ARIA: ${keys.slice(1).join(' → ')}`;
+  return keys.join(' → ');
 }
+
 
 function renderFields() {
   const language = elements.language.value;
@@ -196,8 +208,8 @@ function renderFields() {
   }
 
   let lastGroup = '';
-  for (const { path, value } of flattenObject(data)) {
-    const group = path.split('.')[0];
+  for (const { keys, displayPath, value } of flattenObject(data)) {
+    const group = keys[0];
     if (group !== lastGroup) {
       const title = document.createElement('h3');
       title.className = 'field-group-title';
@@ -208,24 +220,28 @@ function renderFields() {
 
     const card = document.createElement('article');
     card.className = 'field-card';
-    card.dataset.search = `${path} ${value}`.toLowerCase();
+    card.dataset.search = `${displayPath} ${value}`.toLowerCase();
 
     const header = document.createElement('div');
     header.className = 'field-card-header';
     const heading = document.createElement('h3');
-    heading.textContent = fieldLabel(path);
+    heading.textContent = fieldLabel(keys);
     const code = document.createElement('code');
-    code.textContent = path;
+    code.textContent = displayPath;
     header.append(heading, code);
 
-    const input = path === 'lang' ? document.createElement('input') : document.createElement('textarea');
+    const input = keys.length === 1 && keys[0] === 'lang' ? document.createElement('input') : document.createElement('textarea');
     input.value = value;
-    input.dataset.path = path;
+    input.dataset.keys = JSON.stringify(keys);
     if (value.length > 180) input.classList.add('is-long');
     input.addEventListener('input', () => {
-      setByPath(state.data[language], path, input.value);
-      card.dataset.search = `${path} ${input.value}`.toLowerCase();
-      refreshDirtyState();
+      try {
+        setByKeys(state.data[language], keys, input.value);
+        card.dataset.search = `${displayPath} ${input.value}`.toLowerCase();
+        refreshDirtyState();
+      } catch (error) {
+        setStatus(error.message, 'error');
+      }
     });
 
     card.append(header, input);
