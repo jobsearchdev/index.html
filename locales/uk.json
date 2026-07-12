@@ -1,7 +1,7 @@
 {
   "lang": "uk",
   "title": "Technical Engineer",
-  "description": "Євгеній Кофан — Technical Engineer, Drone Systems, Embedded Systems, Electronics, Technical Project Manager та R&D.",
+  "description": "Technical Engineer, Drone Systems, Embedded Systems, Electronics, Technical Project Manager та R&D.",
   "labels": {
     ".brand": "На початок сторінки",
     ".nav": "Основна навігація",
@@ -32,7 +32,7 @@
     ".focus-list li:nth-child(5)": "Technical project management",
     ".focus-list li:nth-child(6)": "R&D та прототипування",
     "#about .section-kicker": "01 / Профіль",
-    "#about h2": "Від системного адміністратора до технічного лідера",
+    "#about h2": "Від системного адміністратора до COO",
     "#about .prose p:nth-child(1)": "Практичний технічний спеціаліст із досвідом в ІТ, інфраструктурі, веброзробці, автоматизації, керуванні командами та R&D-напрямках.",
     "#about .prose p:nth-child(2)": "Пройшов шлях від системного адміністратора і веброзробника до керівника технічного відділу, COO та Project Manager. Розвиваюсь у Drone Technologies, Embedded Systems, Electronics & Robotics, Computer Vision, Cyber Security, Automation & AI.",
     "#skills .section-kicker": "02 / Компетенції",
