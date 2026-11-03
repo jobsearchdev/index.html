@@ -48,9 +48,12 @@ async function setLanguage(language) {
     if (element) element.setAttribute('aria-label', value);
   });
 
-  Object.entries(selected.text).forEach(([selector, value]) => {
-    const element = document.querySelector(selector);
-    if (element) element.innerHTML = value;
+  Object.entries(selected.text).forEach(([key, value]) => {
+    let nodes = document.querySelectorAll(`[data-i18n="${CSS.escape(key)}"]`);
+    if (!nodes.length) {
+      try { nodes = [document.querySelector(key)].filter(Boolean); } catch { nodes = []; }
+    }
+    nodes.forEach((node) => { node.innerHTML = value; });
   });
 
   document.querySelectorAll('[data-lang]').forEach((button) => {
@@ -59,8 +62,9 @@ async function setLanguage(language) {
     button.setAttribute('aria-pressed', String(active));
   });
 
-  document.getElementById('year').textContent = new Date().getFullYear();
-  localStorage.setItem(LANGUAGE_STORAGE_KEY, selected.lang);
+  const year = document.getElementById('year');
+  if (year) year.textContent = new Date().getFullYear();
+  try { localStorage.setItem(LANGUAGE_STORAGE_KEY, selected.lang); } catch {}
 }
 
 document.querySelectorAll('[data-lang]').forEach((button) => {
@@ -69,4 +73,15 @@ document.querySelectorAll('[data-lang]').forEach((button) => {
   });
 });
 
-setLanguage(localStorage.getItem(LANGUAGE_STORAGE_KEY) || DEFAULT_LANGUAGE);
+// Email на сторінці закодовано від ботів-збирачів; розкодовуємо для відвідувачів.
+document.querySelectorAll('[data-email]').forEach((link) => {
+  let email = '';
+  try { email = atob(link.dataset.email).split('').reverse().join(''); } catch { return; }
+  if (!email) return;
+  link.setAttribute('href', `mailto:${email}`);
+  if (link.hasAttribute('data-contact-text')) link.textContent = `${email} ↗`;
+});
+
+let savedLanguage = null;
+try { savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY); } catch {}
+setLanguage(savedLanguage || DEFAULT_LANGUAGE);

@@ -1,142 +1,94 @@
 <!doctype html>
 <html lang="uk"><head>
   <meta charset="utf-8">
-  <meta name="robots" content="noindex, follow" />
+  <meta name="robots" content="noindex, nofollow, noarchive, noimageindex, noai, noimageai">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Євгеній Кофан — Technical Engineer, Drone Systems, Embedded Systems, Electronics, Technical Project Manager та R&amp;D.">
+  <meta name="description" content="Євгеній Кофан — Embedded QA Engineer: тестування IoT-пристроїв і прошивок ESP32, автоматизація на Python/Pytest, AI QA.">
   <meta name="theme-color" content="#07111f">
-  <title>Євгеній Кофан — Technical Engineer</title>
+  <title>Євгеній Кофан — Embedded QA Engineer</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="grid-bg" aria-hidden="true"></div>
   <header class="site-header">
-    <a class="brand" href="#top" aria-label="На початок сторінки"><span>EK</span><strong>ЄК</strong></a>
+    <a class="brand" href="#top" aria-label="На початок сторінки"><span>EK</span><strong data-i18n="brand.name">Євгеній Кофан</strong></a>
     <nav class="nav" aria-label="Основна навігація">
-      <a href="#about">Профіль</a><a href="#skills">Навички</a><a href="#experience">Досвід</a><a href="#labs">Лабораторії</a>
+      <a href="#about" data-i18n="nav.profile">Профіль</a><a href="#skills" data-i18n="nav.skills">Навички</a><a href="#experience" data-i18n="nav.experience">Досвід</a><a href="#projects" data-i18n="nav.projects">Проєкти</a><a href="#certificates" data-i18n="nav.certificates">Сертифікати</a><a href="#labs" data-i18n="nav.labs">Лабораторії</a>
     </nav>
     <div class="language-switch" role="group" aria-label="Перемикач мови">
       <button type="button" data-lang="uk" class="active" aria-pressed="true">UA</button>
       <span aria-hidden="true">/</span>
       <button type="button" data-lang="en" aria-pressed="false">EN</button>
     </div>
-    <a class="button button-small" href="mailto:mywork.fragile358@slmail.me">Написати</a>
+    <a class="button button-small" href="#contact" data-contact="email" data-email="bW9jLmtjdWRAZWRpcnlvai1wYXotZWRhbW51" data-i18n="header.cta">Написати</a>
   </header>
 
   <main id="top"><section class="hero section-shell">
       <div class="hero-copy reveal">
-        <p class="eyebrow">Technical Engineer · Drone Systems · Embedded · R&amp;D</p>
-        <h1>Інженерний підхід.<br><span>Практичний результат.</span></h1>
-        <p class="lead">Поєдную програмну інженерію, серверну інфраструктуру, електроніку, автоматизацію та управління технічними командами.</p>
+        <p class="eyebrow" data-i18n="hero.eyebrow">Embedded QA Engineer · IoT · DefTech · AI QA</p>
+        <h1 data-i18n="hero.title">Якість, перевірена на залізі.<br/><span>Ризики — до релізу.</span></h1>
+        <p class="lead" data-i18n="hero.lead">Тестую IoT-пристрої та прошивки ESP32: від ризиків і тест-плану до автоматизації на Python/Pytest і bug reports з доказами. Поєдную QA з досвідом Tech Lead, COO та автоматизації процесів.</p>
         <div class="hero-actions">
-          <a class="button" href="mailto:mywork.fragile358@slmail.me">Зв’язатися</a>
-          <a class="button button-ghost" href="#experience">Переглянути досвід</a>
+          <a class="button" href="#contact" data-contact="email" data-email="bW9jLmtjdWRAZWRpcnlvai1wYXotZWRhbW51" data-i18n="hero.cta1">Зв’язатися</a>
+          <a class="button button-ghost" href="#projects" data-i18n="hero.cta2">Переглянути проєкти</a>
         </div>
         <div class="quick-facts" aria-label="Короткі відомості">
-          <div><strong>15+</strong><span>років у tech</span></div>
-          <div><strong>6</strong><span>ключових напрямів</span></div>
-          <div><strong>Кривий Ріг</strong><span>Україна · remote</span></div>
+          <div><strong data-i18n="facts.1.value">14+</strong><span data-i18n="facts.1.label">років у tech</span></div>
+          <div><strong data-i18n="facts.2.value">12</strong><span data-i18n="facts.2.label">фахівців у команді (AppFox)</span></div>
+          <div><strong data-i18n="facts.3.value">Україна</strong><span data-i18n="facts.3.label">Remote</span></div>
         </div>
       </div>
       <aside class="hero-panel reveal">
         <div class="radar" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
-        <p class="status"><span></span> Відкритий до пропозицій</p>
-        <h2>Поточний фокус</h2>
-        <ul class="focus-list">
-          <li>Drone systems та FPV</li><li>Embedded / electronics</li><li>Linux / infrastructure</li><li>Automation / AI</li><li>Technical project management</li><li>R&amp;D та прототипування</li>
-        </ul>
+        <p class="status"><span></span> <em class="status-text" data-i18n="hero.status">Відкритий до пропозицій · потрібне бронювання</em></p>
+        <h2 data-i18n="hero.focusTitle">Поточний фокус</h2>
+        <ul class="focus-list"><li data-item="focus-1" data-i18n="focus-1.text">Embedded QA / IoT</li><li data-item="focus-2" data-i18n="focus-2.text">Test automation: Python, Pytest</li><li data-item="focus-3" data-i18n="focus-3.text">AI QA: GPT, Claude, Codex, DeepSeek</li><li data-item="focus-4" data-i18n="focus-4.text">n8n automation</li><li data-item="focus-6" data-i18n="focus-6.text">Tech Lead / project management</li></ul>
+        <p class="updated"><span data-i18n="updated.label">Інформацію оновлено</span>: <time data-updated datetime="2026-11-03">03.11.2026</time></p>
       </aside>
     </section><section id="about" class="section section-shell split">
       <div>
-        <p class="section-kicker">01 / Профіль</p>
-        <h2>Від системного адміністратора до технічного лідера</h2>
+        <p class="section-kicker" data-i18n="about.kicker">01 / Профіль</p>
+        <h2 data-i18n="about.title">Від веб-адміністратора до Embedded QA</h2>
       </div>
       <div class="prose">
-        <p>Практичний технічний спеціаліст із досвідом в ІТ, інфраструктурі, веброзробці, автоматизації, керуванні командами та R&amp;D-напрямках.</p>
-        <p>Пройшов шлях від системного адміністратора і веброзробника до керівника технічного відділу, COO та Project Manager. Розвиваюсь у Drone Technologies, Embedded Systems, Electronics &amp; Robotics, Computer Vision, Cyber Security, Automation &amp; AI.</p>
+        <p data-i18n="about.p1">QA-інженер із фокусом на embedded та IoT: risk-based тестування прошивок, автоматизація на Python/Pytest, аналіз Serial-логів і обміну по UART, зрозумілі bug reports з evidence.</p>
+        <p data-i18n="about.p2">Маю 14+ років у digital: адміністрування сайтів, SEO та PPC, керування командою з 12 фахівців в AppFox, TeamLead розробки, COO та Tech Lead у Synergy Solution, автоматизація процесів у n8n. У 2026 році пройшов курс Prometheus EMB101 «Embedded QA в IoT та DefTech» і отримав сертифікат з відзнакою.</p>
       </div>
     </section><section id="skills" class="section section-shell">
-      <div class="section-heading"><div><p class="section-kicker">02 / Компетенції</p><h2>Технічний стек</h2></div><p>Практичні інструменти для прототипування, інфраструктури та запуску проєктів.</p></div>
-      <div class="cards">
-        <article class="skill-card"><span>01</span><h3>Drone Technologies</h3><p>FPV збірка, ремонт і діагностика, Betaflight, ELRS, RadioMaster, прошивка, калібрування, тестування.</p></article>
-        <article class="skill-card"><span>02</span><h3>Embedded Systems</h3><p>Arduino, ESP32, Raspberry Pi, STM32 / AVR, UART, SPI, I2C, GPIO.</p></article>
-        <article class="skill-card"><span>03</span><h3>Electronics</h3><p>THT пайка, базова SMD, мультиметр, Li-Ion packs, spot welding, ремонт ПК.</p></article>
-        <article class="skill-card"><span>04</span><h3>Programming</h3><p>Python, C++, Kotlin, MySQL, HTML/CSS, Telegram Bot API.</p></article>
-        <article class="skill-card"><span>05</span><h3>Linux &amp; Infrastructure</h3><p>Ubuntu, Debian, Windows, Proxmox VE, Docker, VPN, backup, networking, GitHub.</p></article>
-        <article class="skill-card"><span>06</span><h3>Management &amp; CMS</h3><p>PM, COO, Team Lead, n8n, hiring, documentation, WordPress, Joomla, OpenCart, MODX, Bitrix.</p></article>
-      </div>
+      <div class="section-heading"><div><p class="section-kicker" data-i18n="skills.kicker">02 / Компетенції</p><h2 data-i18n="skills.title">Технічний стек</h2></div><p data-i18n="skills.intro">Інструменти для тестування пристроїв, автоматизації та запуску проєктів.</p></div>
+      <div class="cards"><article class="skill-card" data-item="skill-1"><span>01</span><h3 data-i18n="skill-1.title">Embedded QA</h3><p data-i18n="skill-1.desc">Risk-based testing, Master Test Plan, test matrix, bug reports. ESP32, Wokwi, PlatformIO, UART CLI (JSON), I2C, Logic Analyzer + PulseView.</p></article><article class="skill-card" data-item="skill-2"><span>02</span><h3 data-i18n="skill-2.title">Test Automation & AI QA</h3><p data-i18n="skill-2.desc">Python, Pytest, pyserial, parametrized tests, fixtures, JUnit XML. AI-асистоване тестування: GPT, Claude, Codex, DeepSeek.</p></article><article class="skill-card" data-item="skill-3"><span>03</span><h3 data-i18n="skill-3.title">Drone Technologies</h3><p data-i18n="skill-3.desc">ArduCopter, PicaSim, FPV збірка, ремонт і діагностика, Betaflight, ELRS, RadioMaster, калібрування.</p></article><article class="skill-card" data-item="skill-4"><span>04</span><h3 data-i18n="skill-4.title">Embedded & Electronics</h3><p data-i18n="skill-4.desc">Arduino, ESP32, Raspberry Pi, Orange Pi, STM32 / AVR, UART, GPIO, пайка THT / базова SMD, Li-Ion packs.</p></article><article class="skill-card" data-item="skill-5"><span>05</span><h3 data-i18n="skill-5.title">Automation & Infrastructure</h3><p data-i18n="skill-5.desc">n8n, Telegram Bot API, Linux (Ubuntu, Debian, Armbian), Proxmox VE, Git, GitHub.</p></article><article class="skill-card" data-item="skill-6"><span>06</span><h3 data-i18n="skill-6.title">Management & Web</h3><p data-i18n="skill-6.desc">Tech Lead, COO, TeamLead, Agile, найм, ТЗ, SEO / PPC, Google Analytics, WordPress, Android (Kotlin).</p></article></div>
     </section><section id="experience" class="section section-shell">
-      <div class="section-heading"><div><p class="section-kicker">03 / Кар’єра</p><h2>Досвід роботи</h2></div><p>Управління командами, інженерна практика, автоматизація та вебпродукти.</p></div>
-      <div class="timeline">
-        <article><div class="time">2026 — дотепер</div><div><h3>Project Manager <span>· Syntrex Digital</span></h3><p>Управління командою розробників, планування, контроль виконання, пріоритизація та комунікація між учасниками проєктів.</p></div></article>
-        <article><div class="time">2024</div><div><h3>Head of Technical Department<span>· Syntrex Digital (раніше Synergy Solution)</span></h3><p>Управління технічним відділом, оптимізація процесів, побудова інфраструктури та автоматизація через n8n.</p></div></article>
-        <article><div class="time">2023</div><div><h3>COO<span>· Synergy Solution (раніше Isoft Consulting)</span></h3><p>Побудова внутрішніх процесів, координація відділів, технічне управління, парсинг та автоматизація операційних задач.</p></div></article>
-        <article><div class="time">2022</div><div><h3>Content Manager / Kotlin Developer <span>· Isoft Consulting</span></h3><p>Android/Kotlin розробка, аналітика мобільних додатків та Telegram CRM контент-менеджмент.</p></div></article>
-        <article><div class="time">2018</div><div><h3>Head of Development <span>· AppFox</span></h3><p>Управління командою, найм, розподіл задач, контроль розробки, SEO, PPC та email-маркетинг.</p></div></article>
-        <article><div class="time">2012 — 2018</div><div><h3>Web Developer / SEO</h3><p>GrilleGuard, PartsQ, Пром-Океан, UkraїnkaFest, «Аніма»: розробка CMS-сайтів, SEO, PPC, Analytics/GTM, A/B тестування й технічна підтримка.</p></div></article>
-        <article><div class="time">2010 — 2015</div><div><h3>Інженерна та операційна практика</h3><p>Системне адміністрування у КНЕУ, монтаж мереж у Київстар</p></div></article>
+      <div class="section-heading"><div><p class="section-kicker" data-i18n="experience.kicker">03 / Кар’єра</p><h2 data-i18n="experience.title">Досвід роботи</h2></div><p data-i18n="experience.intro">QA та автоматизація, керування командами, вебпродукти.</p></div>
+      <div class="timeline"><article data-item="exp-1"><div class="time" data-i18n="exp-1.time">2026 — дотепер</div><div><h3><span class="role" data-i18n="exp-1.role">AI QA Engineer / Tech Lead</span> <span class="company">· <span data-i18n="exp-1.company">Synergy Solution</span></span></h3><p data-i18n="exp-1.desc">AI QA та автоматизація тестування (GPT, Claude, Codex, DeepSeek), технічне лідерство, автоматизація процесів у n8n.</p></div></article><article data-item="exp-2"><div class="time" data-i18n="exp-2.time">2024 — дотепер</div><div><h3><span class="role" data-i18n="exp-2.role">Директор</span> <span class="company">· <span data-i18n="exp-2.company">ФОП Кофан</span></span></h3><p data-i18n="exp-2.desc">Власна підприємницька діяльність.</p></div></article><article data-item="exp-3"><div class="time" data-i18n="exp-3.time">2025</div><div><h3><span class="role" data-i18n="exp-3.role">COO / n8n Automation Engineer</span> <span class="company">· <span data-i18n="exp-3.company">Synergy Solution</span></span></h3><p data-i18n="exp-3.desc">Операційне управління компанією після ребрендингу в Synergy Solution, автоматизація процесів у n8n.</p></div></article><article data-item="exp-4"><div class="time" data-i18n="exp-4.time">2023 — 2024</div><div><h3><span class="role" data-i18n="exp-4.role">TeamLead відділу розробки</span> <span class="company">· <span data-i18n="exp-4.company">Syntrex</span></span></h3><p data-i18n="exp-4.desc">Керування відділом розробки після ребрендингу ISoft Consulting у Syntrex, розробка сайтів на WordPress, автоматизація в n8n.</p></div></article><article data-item="exp-5"><div class="time" data-i18n="exp-5.time">2022</div><div><h3><span class="role" data-i18n="exp-5.role">Android Developer / Content Manager</span> <span class="company">· <span data-i18n="exp-5.company">ISoft Consulting</span></span></h3><p data-i18n="exp-5.desc">Розробка мобільних додатків для Android (Kotlin), аналітика мобільних додатків, контент-менеджмент та SEO.</p></div></article><article data-item="exp-6"><div class="time" data-i18n="exp-6.time">2018 — 2022</div><div><h3><span class="role" data-i18n="exp-6.role">Head of Digital / SEO Team Lead / PM</span> <span class="company">· <span data-i18n="exp-6.company">AppFox</span></span></h3><p data-i18n="exp-6.desc">Керування крос-функціональною командою з 12 фахівців (розробка, QA, дизайн, контент, SMM): найм, ТЗ, прийом робіт. SEO-стратегія, CRO, вебаналітика та звітність для керівництва.</p></div></article><article data-item="exp-7"><div class="time" data-i18n="exp-7.time">2015 — 2018</div><div><h3><span class="role" data-i18n="exp-7.role">SEO / PPC Specialist</span></h3><p data-i18n="exp-7.desc">Avada, PartsQ, Agency Seko, WebStart, Веб-технолоджи, Пром-Океан, LIKE DIGITAL, Reffer: технічні SEO-аудити, семантика, Google Ads, лінкбілдинг, міграція сайтів, керування командою просування.</p></div></article><article data-item="exp-8"><div class="time" data-i18n="exp-8.time">2012 — 2015</div><div><h3><span class="role" data-i18n="exp-8.role">Адміністратор веб-сайтів</span></h3><p data-i18n="exp-8.desc">Фестивалі «Аніма» та UkraїnkaFest: розробка й підтримка сайтів, контент, онлайн-платежі, підтримка клієнтів. Оптимізація процесів дала +80% продажів за рік.</p></div></article></div>
+    </section><section id="projects" class="section section-shell">
+      <div class="section-heading"><div><p class="section-kicker" data-i18n="projects.kicker">04 / GitHub</p><h2 data-i18n="projects.title">Проєкти</h2></div><p data-i18n="projects.intro">Відкриті репозиторії з документацією, тестами та доказами.</p></div>
+      <div class="project-grid"><article class="project-card" data-item="project-1" data-url="https://github.com/jobsearchdev/Embedded-QA"><p class="project-tag" data-i18n="project-1.tag">Embedded QA · ESP32 · Pytest</p><h3 data-i18n="project-1.title">ESP32 IoT Node — Embedded QA Case Study</h3><p class="project-desc" data-i18n="project-1.desc">Risk-based тестування IoT-вузла на ESP32 у Wokwi: Master Test Plan, 32 тести в матриці, 39 автотестів на Pytest через UART, аналіз I2C у PulseView. Знайдено 9 Critical і 14 Major дефектів, рішення — NO-GO.</p><a class="project-link" href="https://github.com/jobsearchdev/Embedded-QA" target="_blank" rel="noopener" data-i18n="projects.link">Відкрити на GitHub ↗</a></article><article class="project-card" data-item="project-2" data-url="https://github.com/jobsearchdev/offline-voice-assistant"><p class="project-tag" data-i18n="project-2.tag">Orange Pi · Python · Offline AI</p><h3 data-i18n="project-2.title">Offline Voice Assistant</h3><p class="project-desc" data-i18n="project-2.desc">Повністю офлайн голосовий помічник українською на Orange Pi Zero 3: VAD → Vosk (STT) → команди / локальна LLM → Piper (TTS). Задокументована історія налагодження заліза.</p><a class="project-link" href="https://github.com/jobsearchdev/offline-voice-assistant" target="_blank" rel="noopener" data-i18n="projects.link">Відкрити на GitHub ↗</a></article><article class="project-card" data-item="project-3" data-url="https://github.com/jobsearchdev/n8n-automations"><p class="project-tag" data-i18n="project-3.tag">n8n · SEO · API · JavaScript</p><h3 data-i18n="project-3.title">n8n-автоматизації для SEO</h3><p class="project-desc" data-i18n="project-3.desc">Три робочі автоматизації: відправка сторінок на пришвидшену індексацію через API, моніторинг sitemap.xml кожні 15 хв з відправкою лише нових і оновлених сторінок (порівняння lastmod, n8n Data Tables, сповіщення в Telegram) та збір позицій у Google через DataForSEO із записом у Google Sheets — на основі цього флоу зробили сервіс.</p><a class="project-link" href="https://github.com/jobsearchdev/n8n-automations" target="_blank" rel="noopener" data-i18n="projects.link">Відкрити на GitHub ↗</a></article></div>
+    </section><section id="certificates" class="section section-shell">
+      <div class="section-heading"><div><p class="section-kicker" data-i18n="certs.kicker">05 / Сертифікати</p><h2 data-i18n="certs.title">Сертифікати</h2></div><p data-i18n="certs.intro">Підтверджене навчання: QA, embedded, електроніка, дрони, Python, Linux та OSINT.</p></div>
+      <div class="cert-feature">
+        <a class="cert-image" href="certificates/prometheus-emb101-embedded-qa.pdf" target="_blank" rel="noopener"><img src="certificates/prometheus-emb101-embedded-qa.jpg" alt="Сертифікат Prometheus Embedded QA in IoT and DefTech" width="642" height="909"></a>
+        <div class="cert-body">
+          <p class="project-tag" data-i18n="certs.featured.tag">Prometheus · EMB101 · 28.10.2026</p>
+          <h3 data-i18n="certs.featured.title">Embedded QA в IoT та DefTech</h3>
+          <p class="cert-desc" data-i18n="certs.featured.desc">Сертифікат з відзнакою. Ментор — Олег Мороз, Senior Manual / Automation / Embedded QA. Тестування прошивок ESP32 у Wokwi, UART/I2C, recovery та NVS, Python/Pytest-автоматизація, мережеве тестування IoT, Master Test Plan і release decision.</p>
+          <div class="cert-links">
+            <a class="button" href="certificates/prometheus-emb101-embedded-qa.pdf" target="_blank" rel="noopener" data-i18n="certs.featured.pdf">Сертифікат PDF</a>
+            <a class="button button-ghost" href="https://certs.prometheus.org.ua/cert/b700f942b9d84accb94e2738fe48c93d" target="_blank" rel="noopener" data-i18n="certs.featured.verify">Перевірити ↗</a>
+          </div>
+        </div>
       </div>
+      <div class="cert-grid"><article class="cert-card" data-item="cert-1" data-image="certificates/udemy-software-testing-basics.jpg" data-thumb="" data-verify="https://ude.my/UC-caa2ed99-aebc-44d3-99be-cdf034b43039"><a class="cert-thumb" href="certificates/udemy-software-testing-basics.jpg" target="_blank" rel="noopener"><img src="certificates/udemy-software-testing-basics.jpg" alt="Сертифікат: Тестування програмного забезпечення для початківців" loading="lazy"></a><h4 data-i18n="cert-1.title">Тестування програмного забезпечення для початківців</h4><p class="cert-meta" data-i18n="cert-1.meta">Udemy · Олег Ломажук · 28.08.2026</p><a class="cert-verify" href="https://ude.my/UC-caa2ed99-aebc-44d3-99be-cdf034b43039" target="_blank" rel="noopener" data-i18n="certs.verify">Перевірити ↗</a></article><article class="cert-card" data-item="cert-2" data-image="certificates/nanit-github.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-github.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-github.jpg" alt="Сертифікат: GitHub для інженерів і команд" loading="lazy"></a><h4 data-i18n="cert-2.title">GitHub для інженерів і команд</h4><p class="cert-meta" data-i18n="cert-2.meta">Nanit Robot · №45390 · 03.09.2026</p></article><article class="cert-card" data-item="cert-3" data-image="certificates/nanit-python-ai.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-python-ai.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-python-ai.jpg" alt="Сертифікат: Python &amp; AI" loading="lazy"></a><h4 data-i18n="cert-3.title">Python &amp; AI</h4><p class="cert-meta" data-i18n="cert-3.meta">Nanit Robot · №45442 · 19.08.2026</p></article><article class="cert-card" data-item="cert-4" data-image="certificates/robotdreams-computer-vision.jpg" data-thumb="" data-verify="https://lms.robotdreams.cc/certificate/16f945be8b2e3b2fdaa0919b5d9efe48"><a class="cert-thumb" href="certificates/robotdreams-computer-vision.jpg" target="_blank" rel="noopener"><img src="certificates/robotdreams-computer-vision.jpg" alt="Сертифікат: Computer Vision" loading="lazy"></a><h4 data-i18n="cert-4.title">Computer Vision</h4><p class="cert-meta" data-i18n="cert-4.meta">robot_dreams · 31 год, 21 урок · 23.04.2026</p><a class="cert-verify" href="https://lms.robotdreams.cc/certificate/16f945be8b2e3b2fdaa0919b5d9efe48" target="_blank" rel="noopener" data-i18n="certs.verify">Перевірити ↗</a></article><article class="cert-card" data-item="cert-5" data-image="certificates/nanit-linux.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-linux.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-linux.jpg" alt="Сертифікат: Linux для інженерів" loading="lazy"></a><h4 data-i18n="cert-5.title">Linux для інженерів</h4><p class="cert-meta" data-i18n="cert-5.meta">Nanit Robot · №45389 · 29.05.2026</p></article><article class="cert-card" data-item="cert-6" data-image="certificates/nanit-cpp.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-cpp.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-cpp.jpg" alt="Сертифікат: C++" loading="lazy"></a><h4 data-i18n="cert-6.title">C++</h4><p class="cert-meta" data-i18n="cert-6.meta">Nanit Robot · №45382 · 17.06.2026</p></article><article class="cert-card" data-item="cert-7" data-image="certificates/nanit-drone-master-fpv.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-drone-master-fpv.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-drone-master-fpv.jpg" alt="Сертифікат: Drone Master FPV — серія курсів" loading="lazy"></a><h4 data-i18n="cert-7.title">Drone Master FPV — серія курсів</h4><p class="cert-meta" data-i18n="cert-7.meta">Nanit Robot · №252171 · 17.06.2026</p></article><article class="cert-card" data-item="cert-8" data-image="" data-thumb="ArduPilot" data-verify=""><div class="cert-thumb cert-thumb-text"><span>ArduPilot</span></div><h4 data-i18n="cert-8.title">Ardupilot: від аеродинаміки до автономної місії</h4><p class="cert-meta" data-i18n="cert-8.meta">Nanit Robot · №50130 · 05.06.2026</p><p class="cert-note" data-i18n="cert-8.note">Аеродинаміка, керування дронами та літаками, робота з автопілотом і виконання реального польоту.</p></article><article class="cert-card" data-item="cert-9" data-image="certificates/nanit-ground-drone.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-ground-drone.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-ground-drone.jpg" alt="Сертифікат: Ground Drone" loading="lazy"></a><h4 data-i18n="cert-9.title">Ground Drone</h4><p class="cert-meta" data-i18n="cert-9.meta">Nanit Robot · №45493 · 10.08.2026</p></article><article class="cert-card" data-item="cert-10" data-image="certificates/nanit-fpv-drones.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-fpv-drones.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-fpv-drones.jpg" alt="Сертифікат: FPV дрони" loading="lazy"></a><h4 data-i18n="cert-10.title">FPV дрони</h4><p class="cert-meta" data-i18n="cert-10.meta">Nanit Robot · №45384 · 22.07.2026</p></article><article class="cert-card" data-item="cert-11" data-image="certificates/nanit-programmable-electronics.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-programmable-electronics.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-programmable-electronics.jpg" alt="Сертифікат: Програмована електроніка" loading="lazy"></a><h4 data-i18n="cert-11.title">Програмована електроніка</h4><p class="cert-meta" data-i18n="cert-11.meta">Nanit Robot · №45408 · 05.05.2026</p></article><article class="cert-card" data-item="cert-12" data-image="certificates/nanit-basic-electronics.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-basic-electronics.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-basic-electronics.jpg" alt="Сертифікат: Базова електроніка" loading="lazy"></a><h4 data-i18n="cert-12.title">Базова електроніка</h4><p class="cert-meta" data-i18n="cert-12.meta">Nanit Robot · №50131 · 22.07.2026</p></article><article class="cert-card" data-item="cert-13" data-image="certificates/nanit-measuring-instruments.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-measuring-instruments.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-measuring-instruments.jpg" alt="Сертифікат: Вимірювальні прилади" loading="lazy"></a><h4 data-i18n="cert-13.title">Вимірювальні прилади</h4><p class="cert-meta" data-i18n="cert-13.meta">Nanit Robot · №45388 · 14.05.2026</p></article><article class="cert-card" data-item="cert-14" data-image="certificates/nanit-raspberry-pi.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-raspberry-pi.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-raspberry-pi.jpg" alt="Сертифікат: Raspberry Pi" loading="lazy"></a><h4 data-i18n="cert-14.title">Raspberry Pi</h4><p class="cert-meta" data-i18n="cert-14.meta">Nanit Robot · №45386 · 04.06.2026</p></article><article class="cert-card" data-item="cert-15" data-image="certificates/nanit-home-autonomy.jpg" data-thumb="" data-verify=""><a class="cert-thumb" href="certificates/nanit-home-autonomy.jpg" target="_blank" rel="noopener"><img src="certificates/nanit-home-autonomy.jpg" alt="Сертифікат: Системи автономії дому" loading="lazy"></a><h4 data-i18n="cert-15.title">Системи автономії дому</h4><p class="cert-meta" data-i18n="cert-15.meta">Nanit Robot · №45594 · 24.04.2026</p></article><article class="cert-card" data-item="cert-16" data-image="certificates/udemy-osint-advanced-molfar.jpg" data-thumb="" data-verify="https://ude.my/UC-4f002567-00ed-4d04-a08d-08e991c3f44c"><a class="cert-thumb" href="certificates/udemy-osint-advanced-molfar.jpg" target="_blank" rel="noopener"><img src="certificates/udemy-osint-advanced-molfar.jpg" alt="Сертифікат: OSINT Advanced · Molfar" loading="lazy"></a><h4 data-i18n="cert-16.title">OSINT Advanced · Molfar</h4><p class="cert-meta" data-i18n="cert-16.meta">Udemy · Molfar Intelligence Institute · 11.12.2023</p><a class="cert-verify" href="https://ude.my/UC-4f002567-00ed-4d04-a08d-08e991c3f44c" target="_blank" rel="noopener" data-i18n="certs.verify">Перевірити ↗</a></article><article class="cert-card" data-item="cert-17" data-image="certificates/udemy-osint-basic-molfar.jpg" data-thumb="" data-verify="https://ude.my/UC-38b95f74-4cd0-41e6-9f81-20aa01600cc9"><a class="cert-thumb" href="certificates/udemy-osint-basic-molfar.jpg" target="_blank" rel="noopener"><img src="certificates/udemy-osint-basic-molfar.jpg" alt="Сертифікат: Базовий OSINT · Molfar" loading="lazy"></a><h4 data-i18n="cert-17.title">Базовий OSINT · Molfar</h4><p class="cert-meta" data-i18n="cert-17.meta">Udemy · Molfar Intelligence Institute · 08.12.2023</p><a class="cert-verify" href="https://ude.my/UC-38b95f74-4cd0-41e6-9f81-20aa01600cc9" target="_blank" rel="noopener" data-i18n="certs.verify">Перевірити ↗</a></article></div>
     </section><section id="labs" class="section section-shell">
-      <div class="section-heading"><div><p class="section-kicker">04 / Практика</p><h2>Особисті лабораторії</h2></div><p>Середовище для постійного навчання, тестів і прототипування.</p></div>
-      <div class="lab-grid">
-        <article><div class="lab-icon">FPV</div><h3>FPV Laboratory</h3><p>Збірка FPV-дронів, прошивка, налаштування та діагностика.</p></article>
-        <article><div class="lab-icon">BAT</div><h3>Battery Laboratory</h3><p>Powerbanks, battery packs, тестування Li-Ion та spot welding.</p></article>
-        <article><div class="lab-icon">MCU</div><h3>Embedded Laboratory</h3><p>Arduino, ESP32, STM32, Raspberry Pi, інтерфейси та прототипи.</p></article>
-        <article><div class="lab-icon">LAB</div><h3>Home Lab / Solar</h3><p>Proxmox, Linux-інфраструктура, Telegram bots, backup та домашня сонячна електростанція.</p></article>
-      </div>
+      <div class="section-heading"><div><p class="section-kicker" data-i18n="labs.kicker">06 / Практика</p><h2 data-i18n="labs.title">Особисті лабораторії</h2></div><p data-i18n="labs.intro">Середовище для постійного навчання, тестів і прототипування.</p></div>
+      <div class="lab-grid"><article data-item="lab-1" data-icon="FPV"><div class="lab-icon">FPV</div><h3 data-i18n="lab-1.title">FPV Laboratory</h3><p data-i18n="lab-1.desc">Збірка FPV-дронів, прошивка, налаштування та діагностика.</p></article><article data-item="lab-2" data-icon="BAT"><div class="lab-icon">BAT</div><h3 data-i18n="lab-2.title">Battery Laboratory</h3><p data-i18n="lab-2.desc">Powerbanks, battery packs, тестування Li-Ion та spot welding.</p></article><article data-item="lab-3" data-icon="MCU"><div class="lab-icon">MCU</div><h3 data-i18n="lab-3.title">Embedded Laboratory</h3><p data-i18n="lab-3.desc">Arduino, ESP32, STM32, Raspberry Pi, Orange Pi інтерфейси та прототипи.</p></article><article data-item="lab-4" data-icon="LAB"><div class="lab-icon">LAB</div><h3 data-i18n="lab-4.title">Home Lab / Solar</h3><p data-i18n="lab-4.desc">Proxmox, Linux-інфраструктура, Telegram bots, backup та домашня сонячна електростанція.</p></article></div>
     </section><section class="section section-shell info-grid">
-      <article><p class="section-kicker">05 / Навчання</p><h2>Розвиток</h2><ul><li>Drone Master FPV · Radio Systems Master</li><li>Embedded Engineering · Drone UGV</li><li>Smart Home Systems · Python &amp; AI</li><li>Computer Vision · n8n · Postman</li><li>Cyber Security · OSINT · Molfar</li></ul></article>
-      <article><p class="section-kicker">06 / Освіта</p><h2>База</h2><ul><li>Новобузький педагогічний коледж — Інформатика / Початкові класи</li><li>Криворізький коледж економіки та управління — Фінанси підприємства</li></ul><h3>Мови</h3><p>Українська — рідна · Російська — вільна · Англійська — A1 → B2</p></article>
-    </section><section class="contact section-shell">
-      <p class="section-kicker">Контакт</p><h2>Готовий посилити технічну команду</h2><p>Віддалена робота · ФОП 2 група · довгострокові проєкти</p><a class="contact-mail" href="mailto:mywork.fragile358@slmail.me">mywork.fragile358@slmail.me ↗</a>
+      <article class="learning-block"><p class="section-kicker" data-i18n="learning.kicker">07 / Навчання</p><h2 data-i18n="learning.title">Розвиток</h2><ul><li data-item="learn-1" data-i18n="learn-1.text">Prometheus EMB101 — Embedded QA в IoT та DefTech</li><li data-item="learn-2" data-i18n="learn-2.text">Drone Master FPV · Radio Systems Master · Ground Drone</li><li data-item="learn-3" data-i18n="learn-3.text">Embedded Engineering · Smart Home Systems</li><li data-item="learn-4" data-i18n="learn-4.text">Python & AI · C++ · Computer Vision · n8n · Postman</li><li data-item="learn-5" data-i18n="learn-5.text">Cyber Security · OSINT Advanced · Molfar</li></ul></article>
+      <article class="education-block"><p class="section-kicker" data-i18n="education.kicker">08 / Освіта</p><h2 data-i18n="education.title">База</h2><ul><li data-item="edu-1" data-i18n="edu-1.text">Криворізький коледж економіки та управління ДВНЗ КНЕУ ім. Вадима Гетьмана — молодший спеціаліст, Фінанси підприємства (2006–2009)</li><li data-item="edu-2" data-i18n="edu-2.text">Новобузький педагогічний коледж МДУ ім. В.О. Сухомлинського — молодший спеціаліст, вчитель початкових класів та інформатики (2001–2005)</li></ul><h3 data-i18n="education.languagesTitle">Мови</h3><p class="languages" data-i18n="education.languages">Українська — рідна · Англійська — A2 · Російська — вільно</p></article>
+    </section><section id="contact" class="contact section-shell">
+      <p class="section-kicker" data-i18n="contact.kicker">Контакт</p><h2 data-i18n="contact.title">Готовий посилити QA-команду</h2><p data-i18n="contact.text">Віддалена робота · ФОП · потрібне бронювання · довгострокові проєкти</p><a class="contact-mail" href="#contact" data-contact="email" data-email="bW9jLmtjdWRAZWRpcnlvai1wYXotZWRhbW51" data-contact-text>Email ↗</a>
+      <div class="contact-links"><a href="https://www.linkedin.com/in/evheniiprofile" target="_blank" rel="noopener" data-contact="linkedin">LinkedIn ↗</a><a href="https://github.com/jobsearchdev" target="_blank" rel="noopener" data-contact="github">GitHub ↗</a></div>
     </section></main>
 
-  <footer><p>© <span id="year"></span> Євгеній Кофан</p><a href="#top">На початок ↑</a></footer>
+  <footer><p>© <span id="year"></span> <span data-i18n="footer.name">Євгеній Кофан</span> · <span data-i18n="updated.label">Інформацію оновлено</span>: <time data-updated datetime="2026-11-03">03.11.2026</time></p><a href="#top" data-i18n="footer.top">На початок ↑</a></footer>
   <script src="script.js"></script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </body></html>

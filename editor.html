@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#07111f">
-  <title>GitHub site editor</title>
+  <title>Редактор сайту</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="editor.css?v=20260712-5">
+  <link rel="stylesheet" href="editor.css?v=20261103">
 </head>
 <body class="editor-page">
   <div class="grid-bg" aria-hidden="true"></div>
@@ -17,7 +17,8 @@
       <h1>Редактор сайту</h1>
     </div>
     <div class="editor-header-actions">
-      <a class="button button-ghost" href="index.html" target="_blank" rel="noopener">Відкрити сайт</a>
+      <button class="button button-ghost" id="previewUkButton" type="button" disabled>Перегляд UA</button>
+      <button class="button button-ghost" id="previewEnButton" type="button" disabled>Перегляд EN</button>
       <button class="button" id="publishButton" type="button" disabled>Опублікувати на GitHub</button>
     </div>
   </header>
@@ -30,50 +31,58 @@
         <label>Fine-grained token
           <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
         </label>
-        <div class="two-columns">
-          <label>Власник
-            <input id="owner" type="text" autocomplete="off" placeholder="jobsearchdev">
+        <label class="checkbox-label"><input id="rememberToken" type="checkbox"> Запам’ятати token на цьому пристрої</label>
+        <details class="repo-settings">
+          <summary>Налаштування репозиторію</summary>
+          <div class="two-columns">
+            <label>Власник
+              <input id="owner" type="text" autocomplete="off" placeholder="jobsearchdev">
+            </label>
+            <label>Репозиторій
+              <input id="repo" type="text" autocomplete="off" placeholder="index.html">
+            </label>
+          </div>
+          <label>Гілка
+            <input id="branch" type="text" value="main" autocomplete="off">
           </label>
-          <label>Репозиторій
-            <input id="repo" type="text" autocomplete="off" placeholder="index.html">
+          <label>Шлях до сайту в репозиторії
+            <input id="basePath" type="text" autocomplete="off" placeholder="залиште порожнім для кореня">
           </label>
-        </div>
-        <label>Гілка
-          <input id="branch" type="text" value="main" autocomplete="off">
-        </label>
-        <label>Шлях до сайту в репозиторії
-          <input id="basePath" type="text" autocomplete="off" placeholder="залиште порожнім для кореня">
-        </label>
+          <p class="editor-note">Для цього сайту: owner <strong>jobsearchdev</strong>, repository <strong>index.html</strong>, branch <strong>main</strong>, шлях — порожній.</p>
+        </details>
         <button class="button button-wide" id="connectButton" type="button">Підключитися та завантажити</button>
-        <p class="editor-note">Для вашої структури: owner <strong>jobsearchdev</strong>, repository <strong>index.html</strong>, branch <strong>main</strong>, шлях — порожній.</p>
-        <p class="editor-note">Токен зберігається лише до закриття вкладки. Потрібен дозвіл <strong>Contents: Read and write</strong>.</p>
+        <p class="editor-note">Потрібен fine-grained token з доступом лише до репозиторію сайту і дозволом <strong>Contents: Read and write</strong>. Без галочки token зберігається лише до закриття вкладки.</p>
       </section>
 
       <section class="editor-panel">
-        <h2>Редагування</h2>
+        <h2>Що редагувати</h2>
         <div class="editor-mode-switch" role="tablist" aria-label="Режим редактора">
-          <button class="button button-ghost is-active" id="textModeButton" type="button" role="tab" aria-selected="true">Тексти</button>
-          <button class="button button-ghost" id="blocksModeButton" type="button" role="tab" aria-selected="false">Блоки index.html</button>
+          <button class="button button-ghost is-active" data-mode="lists" type="button" role="tab">Списки</button>
+          <button class="button button-ghost" data-mode="text" type="button" role="tab">Тексти</button>
+          <button class="button button-ghost" data-mode="contacts" type="button" role="tab">Контакти</button>
+          <button class="button button-ghost" data-mode="blocks" type="button" role="tab">HTML</button>
         </div>
-        <div id="textControls">
-        <label>Мова
-          <select id="languageSelect">
-            <option value="uk">Українська</option>
-            <option value="en">English</option>
-          </select>
-        </label>
-        <label>Пошук поля
-          <input id="searchFields" type="search" placeholder="Наприклад: досвід">
-        </label>
+        <div id="listControls">
+          <div class="list-picker" id="listPicker"></div>
+          <p class="editor-note">Додавайте, змінюйте, переставляйте й видаляйте пункти. Кожне поле має українську та англійську версію.</p>
+        </div>
+        <div id="textControls" hidden>
+          <label>Пошук поля
+            <input id="searchFields" type="search" placeholder="Наприклад: досвід, email, Python">
+          </label>
+          <p class="editor-note">Заголовки, абзаци й кнопки сторінки. Ліворуч — українська, праворуч — англійська.</p>
+        </div>
+        <div id="contactsControls" hidden>
+          <p class="editor-note">Email, LinkedIn і GitHub оновлюються одразу в усіх місцях сторінки.</p>
         </div>
         <div id="blocksControls" hidden>
-          <p class="editor-note">Редагуйте HTML секцій, змінюйте порядок або додавайте нові блоки. Некоректний HTML може порушити сторінку.</p>
+          <p class="editor-note">Для досвідчених: сирий HTML секцій. Некоректний HTML може зламати сторінку. Новий текст тут не перекладається автоматично.</p>
           <button class="button button-ghost button-wide" id="addBlockButton" type="button">Додати новий блок</button>
         </div>
         <div class="editor-actions-stack">
           <button class="button button-ghost button-wide" id="loadLocalButton" type="button">Завантажити локальні файли</button>
-          <button class="button button-ghost button-wide" id="downloadButton" type="button">Завантажити поточний файл</button>
-          <button class="button button-ghost button-wide" id="resetButton" type="button">Скасувати зміни</button>
+          <button class="button button-ghost button-wide" id="downloadButton" type="button">Зберегти копію файлів на комп’ютер</button>
+          <button class="button button-ghost button-wide" id="resetButton" type="button">Скасувати всі незбережені зміни</button>
         </div>
       </section>
 
@@ -87,19 +96,20 @@
     <section class="editor-workspace">
       <div class="workspace-toolbar">
         <div>
-          <p class="section-kicker" id="currentLanguageLabel">Українська</p>
-          <h2 id="workspaceTitle">Текст сайту</h2>
+          <p class="section-kicker" id="workspaceKicker">Редактор</p>
+          <h2 id="workspaceTitle">Списки</h2>
         </div>
         <span id="dirtyIndicator" class="dirty-indicator">Без змін</span>
       </div>
       <div id="fieldsContainer" class="fields-container">
         <div class="empty-editor-state">
-          <p>Підключіться до GitHub або завантажте локальні JSON.</p>
+          <p>Підключіться до GitHub або завантажте локальні файли.</p>
         </div>
       </div>
     </section>
   </main>
 
-  <script src="editor.js?v=20260712-5"></script>
+  <script src="site-lists.js?v=20261103"></script>
+  <script src="editor.js?v=20261103"></script>
 </body>
 </html>

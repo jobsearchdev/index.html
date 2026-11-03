@@ -1,115 +1,76 @@
 const API_VERSION = '2022-11-28';
 const LANGUAGES = ['uk', 'en'];
+const { LISTS, CONTACTS, applyContact } = window.SITE_LISTS;
 
 const state = {
   data: { uk: null, en: null },
   originals: { uk: null, en: null },
-  connected: false,
-  account: null,
-  repo: null,
-  lastDiagnostics: '',
-  mode: 'text',
   indexHtml: null,
   indexOriginal: null,
+  uploads: {},
+  connected: false,
+  lastDiagnostics: '',
+  mode: 'lists',
+  listKey: LISTS[0].key,
+  items: [],
   blocks: []
 };
 
+const $ = id => document.getElementById(id);
 const elements = {
-  token: document.getElementById('token'),
-  owner: document.getElementById('owner'),
-  repo: document.getElementById('repo'),
-  branch: document.getElementById('branch'),
-  basePath: document.getElementById('basePath'),
-  connect: document.getElementById('connectButton'),
-  publish: document.getElementById('publishButton'),
-  language: document.getElementById('languageSelect'),
-  search: document.getElementById('searchFields'),
-  loadLocal: document.getElementById('loadLocalButton'),
-  download: document.getElementById('downloadButton'),
-  reset: document.getElementById('resetButton'),
-  status: document.getElementById('statusText'),
-  statusPanel: document.querySelector('.editor-status-panel'),
-  fields: document.getElementById('fieldsContainer'),
-  dirty: document.getElementById('dirtyIndicator'),
-  languageLabel: document.getElementById('currentLanguageLabel'),
-  connectionInfo: document.getElementById('connectionInfo'),
-  copyDiagnostics: document.getElementById('copyDiagnosticsButton'),
-  textMode: document.getElementById('textModeButton'),
-  blocksMode: document.getElementById('blocksModeButton'),
-  textControls: document.getElementById('textControls'),
-  blocksControls: document.getElementById('blocksControls'),
-  addBlock: document.getElementById('addBlockButton'),
-  workspaceTitle: document.getElementById('workspaceTitle')
+  token: $('token'), remember: $('rememberToken'), owner: $('owner'), repo: $('repo'), branch: $('branch'), basePath: $('basePath'),
+  connect: $('connectButton'), publish: $('publishButton'), previewUk: $('previewUkButton'), previewEn: $('previewEnButton'),
+  search: $('searchFields'), loadLocal: $('loadLocalButton'), download: $('downloadButton'), reset: $('resetButton'),
+  status: $('statusText'), statusPanel: document.querySelector('.editor-status-panel'), fields: $('fieldsContainer'),
+  dirty: $('dirtyIndicator'), kicker: $('workspaceKicker'), title: $('workspaceTitle'), connectionInfo: $('connectionInfo'),
+  copyDiagnostics: $('copyDiagnosticsButton'), listPicker: $('listPicker'), addBlock: $('addBlockButton'),
+  controls: { lists: $('listControls'), text: $('textControls'), contacts: $('contactsControls'), blocks: $('blocksControls') }
 };
 
-function deepClone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
+/* ---------- helpers ---------- */
+const deepClone = value => JSON.parse(JSON.stringify(value));
+const el = (tag, props = {}, ...children) => {
+  const node = document.createElement(tag);
+  Object.entries(props).forEach(([key, value]) => {
+    if (key === 'class') node.className = value;
+    else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
+    else if (key in node) node[key] = value;
+    else node.setAttribute(key, value);
+  });
+  children.flat().filter(c => c !== null && c !== undefined).forEach(c => node.append(c));
+  return node;
+};
+const button = (label, handler, extra = {}) => el('button', { class: 'button button-ghost', type: 'button', textContent: label, onclick: handler, ...extra });
+const plain = html => { const d = document.createElement('div'); d.innerHTML = html || ''; return d.textContent.trim(); };
 
 function setStatus(message, type = '') {
   elements.status.textContent = message;
   elements.statusPanel.classList.toggle('is-error', type === 'error');
   elements.statusPanel.classList.toggle('is-success', type === 'success');
 }
-
 function setDiagnostics(lines) {
   state.lastDiagnostics = Array.isArray(lines) ? lines.join('\n') : String(lines || '');
   elements.copyDiagnostics.disabled = !state.lastDiagnostics;
 }
 
-function normalizeBasePath(value) {
-  return String(value || '').trim().replace(/^\/+|\/+$/g, '');
-}
-
+/* ---------- GitHub API ---------- */
+const normalizeBasePath = value => String(value || '').trim().replace(/^\/+|\/+$/g, '');
 function getConfig() {
   return {
-    token: elements.token.value.trim(),
-    owner: elements.owner.value.trim(),
-    repo: elements.repo.value.trim(),
-    branch: elements.branch.value.trim() || 'main',
-    basePath: normalizeBasePath(elements.basePath.value)
+    token: elements.token.value.trim(), owner: elements.owner.value.trim(), repo: elements.repo.value.trim(),
+    branch: elements.branch.value.trim() || 'main', basePath: normalizeBasePath(elements.basePath.value)
   };
 }
-
 function validateConfig({ token, owner, repo, branch }) {
   if (!token) throw new Error('Вставте GitHub token.');
-  if (!owner) throw new Error('Вкажіть власника репозиторію.');
-  if (!repo) throw new Error('Вкажіть назву репозиторію.');
+  if (!owner) throw new Error('Вкажіть власника репозиторію (Налаштування репозиторію).');
+  if (!repo) throw new Error('Вкажіть назву репозиторію (Налаштування репозиторію).');
   if (!branch) throw new Error('Вкажіть гілку.');
 }
-
-function indexFilePath(config = getConfig()) {
-  return [config.basePath, 'index.html'].filter(Boolean).join('/');
-}
-
-function indexEndpoint(config = getConfig()) {
-  return `${repoApiBase(config)}/contents/${encodePath(indexFilePath(config))}`;
-}
-
-function filePath(language, config = getConfig()) {
-  return [config.basePath, 'locales', `${language}.json`].filter(Boolean).join('/');
-}
-
-function encodePath(path) {
-  return path.split('/').map(encodeURIComponent).join('/');
-}
-
-function repoApiBase(config = getConfig()) {
-  return `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}`;
-}
-
-function contentEndpoint(language, config = getConfig()) {
-  return `${repoApiBase(config)}/contents/${encodePath(filePath(language, config))}`;
-}
-
-function apiHeaders(config = getConfig()) {
-  return {
-    Accept: 'application/vnd.github+json',
-    Authorization: `Bearer ${config.token}`,
-    'X-GitHub-Api-Version': API_VERSION,
-    'Content-Type': 'application/json'
-  };
-}
+const encodePath = path => path.split('/').map(encodeURIComponent).join('/');
+const repoPath = (path, config = getConfig()) => [config.basePath, path].filter(Boolean).join('/');
+const repoApiBase = (config = getConfig()) => `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}`;
+const contentsUrl = (path, config = getConfig()) => `${repoApiBase(config)}/contents/${encodePath(repoPath(path, config))}`;
 
 function utf8ToBase64(text) {
   const bytes = new TextEncoder().encode(text);
@@ -117,296 +78,454 @@ function utf8ToBase64(text) {
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary);
 }
-
 function base64ToUtf8(value) {
   const binary = atob(String(value || '').replace(/\s/g, ''));
-  const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
+  return new TextDecoder().decode(Uint8Array.from(binary, c => c.charCodeAt(0)));
 }
-
 async function readResponse(response) {
   const text = await response.text();
   if (!text) return {};
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { message: text };
-  }
+  try { return JSON.parse(text); } catch { return { message: text }; }
 }
-
-function explainGitHubError(response, payload, action, config = getConfig()) {
+function explainGitHubError(response, payload, action, config) {
   const detail = payload?.message || `${response.status} ${response.statusText}`;
   const accepted = response.headers.get('x-accepted-github-permissions');
   const permission = accepted ? ` GitHub очікує: ${accepted}.` : '';
   const target = `${config.owner}/${config.repo}@${config.branch}`;
-
-  if (response.status === 401) return `Токен недійсний, прострочений або введений не повністю. ${detail}`;
+  if (response.status === 401) return `Token недійсний, прострочений або введений не повністю. Створіть новий token. ${detail}`;
   if (response.status === 403) return `Немає дозволу на ${action}. Для ${target} потрібен fine-grained token з Contents: Read and write.${permission} ${detail}`;
-  if (response.status === 404) return `GitHub не знайшов ${action}. Перевірте owner, repo, branch і шлях. Для приватного репозиторію 404 також означає, що token не має доступу. ${detail}`;
-  if (response.status === 409) return `GitHub повідомив про конфлікт. Дані в гілці змінилися або гілка має обмеження. Перезавантажте файли та повторіть. ${detail}`;
-  if (response.status === 422) return `GitHub відхилив запис. Перевірте SHA, назву гілки та правила захисту гілки. ${detail}`;
+  if (response.status === 404) return `GitHub не знайшов ${action}. Перевірте owner, repo, branch і шлях. ${detail}`;
+  if (response.status === 409) return `Конфлікт: файли в репозиторії змінилися. Збережіть копію, перепідключіться й повторіть. ${detail}`;
+  if (response.status === 422) return `GitHub відхилив запис. ${detail}`;
   return `Не вдалося ${action}: ${detail}${permission}`;
 }
-
 async function githubRequest(url, options = {}, action = 'виконати запит', config = getConfig()) {
   const response = await fetch(url, {
-    ...options,
-    cache: 'no-store',
-    headers: {
-      ...apiHeaders(config),
-      ...(options.headers || {})
-    }
+    ...options, cache: 'no-store',
+    headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${config.token}`, 'X-GitHub-Api-Version': API_VERSION, 'Content-Type': 'application/json', ...(options.headers || {}) }
   });
   const payload = await readResponse(response);
-  setDiagnostics([
-    `${options.method || 'GET'} ${url}`,
-    `HTTP ${response.status} ${response.statusText}`,
-    payload?.message ? `Message: ${payload.message}` : '',
-    response.headers.get('x-accepted-github-permissions') ? `Accepted permissions: ${response.headers.get('x-accepted-github-permissions')}` : ''
-  ].filter(Boolean));
-  if (!response.ok) throw new Error(explainGitHubError(response, payload, action, config));
+  setDiagnostics([`${options.method || 'GET'} ${url}`, `HTTP ${response.status} ${response.statusText}`, payload?.message ? `Message: ${payload.message}` : ''].filter(Boolean));
+  if (!response.ok) { const error = new Error(explainGitHubError(response, payload, action, config)); error.status = response.status; throw error; }
   return payload;
 }
+async function getFile(path, config, action) {
+  return githubRequest(`${contentsUrl(path, config)}?ref=${encodeURIComponent(config.branch)}`, {}, action || `завантажити ${path}`, config);
+}
+async function getFileSha(path, config) {
+  try { return (await getFile(path, config)).sha; } catch (error) { if (error.status === 404) return undefined; throw error; }
+}
+async function putFile(path, base64, message, config) {
+  const sha = await getFileSha(path, config);
+  await githubRequest(contentsUrl(path, config), {
+    method: 'PUT', body: JSON.stringify({ message, content: base64, branch: config.branch, ...(sha ? { sha } : {}) })
+  }, `опублікувати ${path}`, config);
+}
 
-function flattenObject(object, keys = [], output = []) {
-  Object.entries(object).forEach(([key, value]) => {
-    const nextKeys = [...keys, key];
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      flattenObject(value, nextKeys, output);
-    } else {
-      output.push({
-        keys: nextKeys,
-        displayPath: nextKeys.join(' → '),
-        value: String(value ?? '')
-      });
-    }
+/* ---------- document model ---------- */
+const parseDoc = () => new DOMParser().parseFromString(state.indexHtml, 'text/html');
+const serialize = doc => `<!doctype html>\n${doc.documentElement.outerHTML}\n`;
+function mutateDoc(fn) { const doc = parseDoc(); fn(doc); state.indexHtml = serialize(doc); }
+const text = lang => state.data[lang].text;
+const renderCtx = () => ({ uk: key => text('uk')[key] });
+const listDef = key => LISTS.find(def => def.key === key);
+
+function readItems(def, doc = parseDoc()) {
+  const container = doc.querySelector(def.container);
+  if (!container) return null;
+  return [...container.children].filter(node => node.dataset.item).map(node => {
+    const id = node.dataset.item;
+    const item = { id, uk: {}, en: {}, attrs: {} };
+    def.fields.forEach(field => {
+      const key = `${id}.${field.name}`;
+      item.uk[field.name] = text('uk')[key] ?? node.querySelector(`[data-i18n="${key}"]`)?.innerHTML ?? '';
+      item.en[field.name] = text('en')[key] ?? '';
+    });
+    def.attrs.forEach(attr => { item.attrs[attr.name] = node.dataset[attr.name] || ''; });
+    return item;
   });
-  return output;
 }
 
-function setByKeys(object, keys, value) {
-  let target = object;
-  for (const key of keys.slice(0, -1)) {
-    if (!target || typeof target !== 'object' || !(key in target)) {
-      throw new Error(`Не вдалося знайти поле: ${keys.join(' → ')}`);
-    }
-    target = target[key];
+function writeItems(def, removedIds = []) {
+  const ctx = renderCtx();
+  mutateDoc(doc => {
+    const container = doc.querySelector(def.container);
+    container.innerHTML = state.items.map((item, index) => def.render(item, ctx, index)).join('');
+  });
+  for (const lang of LANGUAGES) {
+    const dict = text(lang);
+    removedIds.forEach(id => Object.keys(dict).filter(key => key.startsWith(`${id}.`)).forEach(key => delete dict[key]));
+    state.items.forEach(item => def.fields.forEach(field => {
+      const key = `${item.id}.${field.name}`;
+      const value = item[lang][field.name];
+      if (value) dict[key] = value; else delete dict[key];
+    }));
   }
-  target[keys.at(-1)] = value;
+  refreshDirtyState();
 }
 
-function isIndexDirty() {
-  return state.indexHtml !== null && state.indexHtml !== state.indexOriginal;
-}
-
-function isDirty() {
-  return isIndexDirty() || LANGUAGES.some(language => state.data[language] && JSON.stringify(state.data[language]) !== JSON.stringify(state.originals[language]));
-}
-
+/* ---------- dirty state ---------- */
+const languageDirty = lang => state.data[lang] && JSON.stringify(state.data[lang]) !== JSON.stringify(state.originals[lang]);
+const indexDirty = () => state.indexHtml !== null && state.indexHtml !== state.indexOriginal;
+const isDirty = () => indexDirty() || LANGUAGES.some(languageDirty) || Object.keys(state.uploads).length > 0;
 function refreshDirtyState() {
   const dirty = isDirty();
-  elements.dirty.textContent = dirty ? 'Є незбережені зміни' : 'Без змін';
+  elements.dirty.textContent = dirty ? 'Є неопубліковані зміни' : 'Без змін';
   elements.dirty.classList.toggle('is-dirty', dirty);
   elements.publish.disabled = !dirty || !state.connected;
+  const loaded = Boolean(state.indexHtml && state.data.uk && state.data.en);
+  elements.previewUk.disabled = !loaded;
+  elements.previewEn.disabled = !loaded;
 }
 
-function fieldLabel(keys) {
-  if (keys[0] === 'text') return keys.slice(1).join(' → ');
-  if (keys[0] === 'labels') return `ARIA: ${keys.slice(1).join(' → ')}`;
-  return keys.join(' → ');
+/* ---------- modes ---------- */
+function setEditorMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('[data-mode]').forEach(b => {
+    const active = b.dataset.mode === mode;
+    b.classList.toggle('is-active', active);
+    b.setAttribute('aria-selected', String(active));
+  });
+  Object.entries(elements.controls).forEach(([key, node]) => { node.hidden = key !== mode; });
+  render();
+}
+function render() {
+  elements.fields.innerHTML = '';
+  if (!state.indexHtml || !state.data.uk || !state.data.en) {
+    elements.fields.append(el('div', { class: 'empty-editor-state' }, el('p', { textContent: 'Підключіться до GitHub або завантажте локальні файли.' })));
+    refreshDirtyState();
+    return;
+  }
+  ({ lists: renderLists, text: renderTexts, contacts: renderContacts, blocks: renderBlocks })[state.mode]();
+  refreshDirtyState();
 }
 
+/* ---------- lists mode ---------- */
+function renderListPicker() {
+  elements.listPicker.innerHTML = '';
+  LISTS.forEach(def => {
+    elements.listPicker.append(button(def.title, () => { state.listKey = def.key; renderListPicker(); if (state.mode === 'lists') render(); },
+      { class: `button button-ghost${def.key === state.listKey ? ' is-active' : ''}` }));
+  });
+}
 
+function emptyItem(def) {
+  const id = `${def.prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+  const item = { id, uk: {}, en: {}, attrs: {} };
+  def.fields.forEach(f => { item.uk[f.name] = ''; item.en[f.name] = ''; });
+  def.attrs.forEach(a => { item.attrs[a.name] = ''; });
+  return item;
+}
 
-function parseIndexBlocks(html) {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+function renderLists() {
+  const def = listDef(state.listKey);
+  elements.kicker.textContent = 'Списки';
+  elements.title.textContent = def.title;
+  const items = readItems(def);
+  if (!items) {
+    elements.fields.append(el('div', { class: 'empty-editor-state' }, el('p', { textContent: `На сторінці не знайдено контейнер ${def.container}. Можливо, його видалили в режимі HTML.` })));
+    return;
+  }
+  state.items = items;
+  const add = position => {
+    const item = emptyItem(def);
+    position === 'start' ? state.items.unshift(item) : state.items.push(item);
+    writeItems(def); renderLists();
+    setStatus('Новий пункт додано. Заповніть поля та опублікуйте.');
+  };
+  elements.fields.innerHTML = '';
+  elements.fields.append(el('div', { class: 'list-toolbar' },
+    el('span', { class: 'list-count', textContent: `Пунктів: ${state.items.length}` }),
+    button('+ Додати на початок', () => add('start'), { class: 'button' }),
+    button('+ Додати в кінець', () => add('end'))));
+  state.items.forEach((item, index) => elements.fields.append(renderItemCard(def, item, index)));
+  if (state.items.length > 3) elements.fields.append(el('div', { class: 'list-toolbar' }, button('+ Додати в кінець', () => add('end'))));
+}
+
+function renderItemCard(def, item, index) {
+  const firstField = def.fields[0].name;
+  const heading = el('h3', { class: 'item-title', textContent: plain(item.uk[firstField]) || plain(item.uk[def.fields[1]?.name]) || 'Новий пункт' });
+  const move = delta => {
+    const target = index + delta;
+    [state.items[index], state.items[target]] = [state.items[target], state.items[index]];
+    writeItems(def); renderLists();
+  };
+  const remove = () => {
+    if (!confirm(`Видалити «${heading.textContent}»?`)) return;
+    const [removed] = state.items.splice(index, 1);
+    dropUpload(removed.attrs.image);
+    writeItems(def, [removed.id]); renderLists();
+    setStatus('Пункт видалено. Зміни з’являться на сайті після публікації.');
+  };
+  const card = el('article', { class: 'item-card' },
+    el('div', { class: 'item-card-header' },
+      el('span', { class: 'item-number', textContent: String(index + 1).padStart(2, '0') }), heading,
+      el('div', { class: 'block-card-actions' },
+        button('↑', () => move(-1), { disabled: index === 0, title: 'Вище' }),
+        button('↓', () => move(1), { disabled: index === state.items.length - 1, title: 'Нижче' }),
+        button('Видалити', remove, { class: 'button button-ghost button-danger' }))));
+
+  def.fields.forEach(field => {
+    const row = el('div', { class: 'bilingual-row' });
+    LANGUAGES.forEach(lang => {
+      const input = el(field.multiline ? 'textarea' : 'input', { value: item[lang][field.name] || '', placeholder: field.example || (field.optional ? 'необов’язково' : '') });
+      if (!field.optional && !item[lang][field.name]) input.classList.add('is-empty');
+      input.addEventListener('input', () => {
+        item[lang][field.name] = input.value;
+        input.classList.toggle('is-empty', !field.optional && !input.value.trim());
+        if (field.name === firstField && lang === 'uk') heading.textContent = plain(input.value) || 'Новий пункт';
+        writeItems(def);
+      });
+      row.append(el('label', { class: 'lang-field' }, el('span', { class: 'lang-badge', textContent: lang === 'uk' ? 'UA' : 'EN' }), input));
+    });
+    card.append(el('div', { class: 'item-field' }, el('div', { class: 'item-field-label', textContent: `${field.label}${field.optional ? ' (необов’язково)' : ''}` }), row));
+  });
+
+  def.attrs.forEach(attr => {
+    if (attr.type === 'image') { card.append(renderImageField(def, item, attr)); return; }
+    const input = el('input', { value: item.attrs[attr.name] || '', type: attr.type === 'url' ? 'url' : 'text', placeholder: attr.type === 'url' ? 'https://…' : '' });
+    input.addEventListener('input', () => { item.attrs[attr.name] = input.value.trim(); writeItems(def); });
+    card.append(el('div', { class: 'item-field' }, el('div', { class: 'item-field-label', textContent: `${attr.label}${attr.optional ? ' (необов’язково)' : ''}` }), input));
+  });
+  return card;
+}
+
+const imageSrc = path => state.uploads[path]?.dataUrl || path;
+function dropUpload(path) { if (path && state.uploads[path]) delete state.uploads[path]; }
+
+function renderImageField(def, item, attr) {
+  const current = item.attrs[attr.name];
+  const preview = current ? el('img', { class: 'image-preview', src: imageSrc(current), alt: '' }) : el('div', { class: 'image-preview image-empty', textContent: 'Немає картинки' });
+  const fileInput = el('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp' });
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    try {
+      setStatus('Готую зображення…');
+      const { base64, dataUrl } = await resizeImage(file);
+      const slug = (plain(item.en.title || item.uk.title || 'certificate').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)) || 'certificate';
+      const path = `certificates/${slug}-${Date.now().toString(36)}.jpg`;
+      dropUpload(current);
+      state.uploads[path] = { base64, dataUrl };
+      item.attrs[attr.name] = path;
+      writeItems(def); renderLists();
+      setStatus('Зображення додано. Воно завантажиться на GitHub під час публікації.', 'success');
+    } catch (error) { setStatus(error.message, 'error'); }
+  });
+  const removeButton = current ? button('Прибрати картинку', () => { dropUpload(current); item.attrs[attr.name] = ''; writeItems(def); renderLists(); }) : null;
+  return el('div', { class: 'item-field' },
+    el('div', { class: 'item-field-label', textContent: `${attr.label} — JPG, PNG або WEBP (PDF спершу збережіть як картинку)` }),
+    el('div', { class: 'image-field' }, preview, el('div', { class: 'image-actions' }, el('label', { class: 'button button-ghost file-button' }, current ? 'Замінити картинку' : 'Вибрати картинку', fileInput), removeButton)));
+}
+
+async function resizeImage(file) {
+  if (!file.type.startsWith('image/')) throw new Error('Потрібна картинка (JPG, PNG або WEBP). PDF збережіть як картинку або зробіть скріншот.');
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1000 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+  return { dataUrl, base64: dataUrl.split(',')[1] };
+}
+
+/* ---------- texts mode ---------- */
+const SECTION_NAMES = { about: 'Профіль', skills: 'Навички', experience: 'Досвід', projects: 'Проєкти', certificates: 'Сертифікати', labs: 'Лабораторії', contact: 'Контакт' };
+const KEY_NAMES = {
+  kicker: 'Надзаголовок', title: 'Заголовок', intro: 'Підзаголовок', p1: 'Абзац 1', p2: 'Абзац 2', lead: 'Опис', eyebrow: 'Рядок над заголовком',
+  cta: 'Кнопка', cta1: 'Кнопка 1', cta2: 'Кнопка 2', status: 'Статус', focusTitle: 'Заголовок «Фокус»', value: 'Значення', label: 'Підпис',
+  name: 'Ім’я', top: 'Посилання «нагору»', text: 'Текст', link: 'Текст посилання в усіх проєктах', verify: 'Текст кнопки перевірки', tag: 'Теги',
+  desc: 'Опис', pdf: 'Кнопка PDF', languagesTitle: 'Заголовок «Мови»', languages: 'Мови', profile: 'Меню: Профіль', skills: 'Меню: Навички',
+  experience: 'Меню: Досвід', projects: 'Меню: Проєкти', certificates: 'Меню: Сертифікати', labs: 'Меню: Лабораторії'
+};
+function groupName(node) {
+  if (!node) return 'Інше';
+  if (node.closest('header')) return 'Шапка і меню';
+  if (node.closest('footer')) return 'Підвал';
+  if (node.closest('.hero')) return 'Головний екран';
+  if (node.closest('.cert-feature')) return 'Сертифікати: головний (Prometheus)';
+  if (node.closest('.info-grid')) return 'Навчання та освіта';
+  const section = node.closest('section');
+  return SECTION_NAMES[section?.id] || section?.id || 'Інше';
+}
+function keyLabel(key) {
+  const parts = key.split('.');
+  const last = parts.at(-1);
+  if (key === 'certs.verify') return 'Текст кнопки «Перевірити» в усіх сертифікатах';
+  if (parts[0] === 'facts') return `Факт ${parts[1]}: ${KEY_NAMES[last] || last}`;
+  return KEY_NAMES[last] || key;
+}
+
+function renderTexts() {
+  elements.kicker.textContent = 'Тексти сторінки';
+  elements.title.textContent = 'Українська / English';
+  const doc = parseDoc();
+  const itemIds = new Set([...doc.querySelectorAll('[data-item]')].map(n => n.dataset.item));
+  const keys = [...new Set([...Object.keys(text('uk')), ...Object.keys(text('en'))])].filter(key => !itemIds.has(key.split('.')[0]));
+  const nodes = new Map(keys.map(key => [key, doc.querySelector(`[data-i18n="${CSS.escape(key)}"]`)]));
+  const all = [...doc.querySelectorAll('*')];
+  const position = key => { const node = nodes.get(key); return node ? all.indexOf(node) : Infinity; };
+  keys.sort((a, b) => position(a) - position(b));
+
+  const metaCard = (name, label) => fieldCard('Назва вкладки та опис для пошуковиків', label, lang => state.data[lang][name] || '', (lang, value) => {
+    state.data[lang][name] = value;
+    if (lang === 'uk') mutateDoc(d => { if (name === 'title') d.title = value; else d.querySelector('meta[name="description"]')?.setAttribute('content', value); });
+  }, `${name}`);
+  const groups = new Map([['Назва вкладки та опис для пошуковиків', [metaCard('title', 'Назва вкладки браузера'), metaCard('description', 'Опис сторінки')]]]);
+  keys.forEach(key => {
+    const node = nodes.get(key);
+    const group = node ? groupName(node) : 'Не використовується на сторінці';
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push(fieldCard(group, keyLabel(key), lang => text(lang)[key] ?? '', (lang, value) => {
+      text(lang)[key] = value;
+      if (lang === 'uk') mutateDoc(d => d.querySelectorAll(`[data-i18n="${CSS.escape(key)}"]`).forEach(n => { n.innerHTML = value; }));
+    }, key));
+  });
+  groups.forEach((cards, name) => {
+    elements.fields.append(el('section', { class: 'field-group' }, el('h3', { class: 'field-group-title', textContent: name }), ...cards));
+  });
+  applySearch();
+}
+
+function fieldCard(group, label, getValue, setValue, key) {
+  const row = el('div', { class: 'bilingual-row' });
+  const card = el('article', { class: 'field-card' });
+  const updateSearch = () => { card.dataset.search = `${group} ${label} ${key} ${LANGUAGES.map(getValue).join(' ')}`.toLowerCase(); };
+  LANGUAGES.forEach(lang => {
+    const value = getValue(lang);
+    const input = el('textarea', { value, rows: Math.min(10, Math.max(2, Math.ceil(value.length / 50) + 1)) });
+    input.addEventListener('input', () => { setValue(lang, input.value); updateSearch(); refreshDirtyState(); });
+    row.append(el('label', { class: 'lang-field' }, el('span', { class: 'lang-badge', textContent: lang === 'uk' ? 'UA' : 'EN' }), input));
+  });
+  card.append(el('div', { class: 'field-card-header' }, el('h3', { textContent: label }), el('code', { textContent: key })), row);
+  updateSearch();
+  return card;
+}
+function applySearch() {
+  const query = elements.search.value.trim().toLowerCase();
+  document.querySelectorAll('.field-card').forEach(card => { card.hidden = Boolean(query) && !card.dataset.search.includes(query); });
+  document.querySelectorAll('.field-group').forEach(group => { group.hidden = ![...group.querySelectorAll('.field-card')].some(card => !card.hidden); });
+}
+
+/* ---------- contacts mode ---------- */
+function renderContacts() {
+  elements.kicker.textContent = 'Контакти';
+  elements.title.textContent = 'Email та посилання';
+  const doc = parseDoc();
+  CONTACTS.forEach(contact => {
+    const input = el('input', { value: contact.read(doc), type: contact.name === 'email' ? 'email' : 'url' });
+    input.addEventListener('input', () => { mutateDoc(d => applyContact(d, contact.name, input.value.trim())); refreshDirtyState(); });
+    elements.fields.append(el('article', { class: 'field-card' }, el('div', { class: 'field-card-header' }, el('h3', { textContent: contact.label })), input));
+  });
+}
+
+/* ---------- HTML blocks mode ---------- */
+function parseIndexBlocks() {
+  const doc = parseDoc();
   const blocks = [];
   const header = doc.querySelector('body > header');
   const main = doc.querySelector('body > main');
   const footer = doc.querySelector('body > footer');
   if (header) blocks.push({ kind: 'header', label: 'Header', html: header.outerHTML });
-  if (main) {
-    [...main.children].forEach((node, index) => {
-      const id = node.id ? `#${node.id}` : '';
-      const classes = [...node.classList].slice(0, 2).map(c => `.${c}`).join('');
-      blocks.push({ kind: 'main', label: `Секція ${index + 1} ${id || classes}`.trim(), html: node.outerHTML });
-    });
-  }
+  if (main) [...main.children].forEach((node, index) => {
+    const id = node.id ? `#${node.id}` : [...node.classList].slice(0, 2).map(c => `.${c}`).join('');
+    blocks.push({ kind: 'main', label: `Секція ${index + 1} ${id}`.trim(), html: node.outerHTML });
+  });
   if (footer) blocks.push({ kind: 'footer', label: 'Footer', html: footer.outerHTML });
   state.blocks = blocks;
 }
-
-function rebuildIndexHtml() {
-  if (!state.indexHtml) return;
-  const doc = new DOMParser().parseFromString(state.indexHtml, 'text/html');
-  const body = doc.body;
-  const oldHeader = body.querySelector(':scope > header');
-  const oldMain = body.querySelector(':scope > main');
-  const oldFooter = body.querySelector(':scope > footer');
-  const parseNode = html => {
-    const temp = document.createElement('template');
-    temp.innerHTML = html.trim();
-    return temp.content.firstElementChild;
-  };
-  const headerBlock = state.blocks.find(b => b.kind === 'header');
-  const footerBlock = state.blocks.find(b => b.kind === 'footer');
-  const mainBlocks = state.blocks.filter(b => b.kind === 'main');
-  if (headerBlock && oldHeader) oldHeader.replaceWith(parseNode(headerBlock.html));
-  if (oldMain) {
-    oldMain.replaceChildren(...mainBlocks.map(b => parseNode(b.html)));
-  }
-  if (footerBlock && oldFooter) oldFooter.replaceWith(parseNode(footerBlock.html));
-  state.indexHtml = `<!doctype html>\n${doc.documentElement.outerHTML}\n`;
+function rebuildIndexFromBlocks() {
+  const parseNode = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  mutateDoc(doc => {
+    const body = doc.body;
+    const header = state.blocks.find(b => b.kind === 'header');
+    const footer = state.blocks.find(b => b.kind === 'footer');
+    if (header) body.querySelector(':scope > header')?.replaceWith(parseNode(header.html));
+    body.querySelector(':scope > main')?.replaceChildren(...state.blocks.filter(b => b.kind === 'main').map(b => parseNode(b.html)));
+    if (footer) body.querySelector(':scope > footer')?.replaceWith(parseNode(footer.html));
+  });
 }
-
 function validateBlockHtml(block) {
   const template = document.createElement('template');
   template.innerHTML = block.html.trim();
-  const elements = [...template.content.children];
-  if (elements.length !== 1) return 'Блок повинен містити рівно один кореневий HTML-елемент.';
+  const children = [...template.content.children];
+  if (children.length !== 1) return 'Блок повинен містити рівно один кореневий HTML-елемент.';
   const expected = block.kind === 'main' ? 'SECTION' : block.kind.toUpperCase();
-  if (elements[0].tagName !== expected) return `Очікується кореневий тег <${expected.toLowerCase()}>.`;
+  if (children[0].tagName !== expected) return `Очікується кореневий тег <${expected.toLowerCase()}>.`;
   return '';
 }
-
 function renderBlocks() {
-  elements.fields.innerHTML = '';
-  elements.languageLabel.textContent = 'INDEX.HTML';
-  elements.workspaceTitle.textContent = 'Блоки сторінки';
-  if (!state.indexHtml) {
-    elements.fields.innerHTML = '<div class="empty-editor-state"><p>Підключіться до GitHub або завантажте локальні файли.</p></div>';
-    refreshDirtyState();
-    return;
-  }
+  elements.kicker.textContent = 'INDEX.HTML';
+  elements.title.textContent = 'HTML-блоки';
+  parseIndexBlocks();
   state.blocks.forEach((block, index) => {
-    const card = document.createElement('article');
-    card.className = 'block-card';
-    const header = document.createElement('div');
-    header.className = 'block-card-header';
-    const titleWrap = document.createElement('div');
-    const title = document.createElement('h3'); title.className = 'block-card-title'; title.textContent = block.label;
-    const type = document.createElement('div'); type.className = 'block-type'; type.textContent = block.kind;
-    titleWrap.append(title, type);
-    const actions = document.createElement('div'); actions.className = 'block-card-actions';
-    const makeButton = (label, handler, disabled=false) => { const b=document.createElement('button'); b.className='button button-ghost'; b.type='button'; b.textContent=label; b.disabled=disabled; b.addEventListener('click',handler); return b; };
-    actions.append(
-      makeButton('↑', () => moveBlock(index, -1), index === 0 || block.kind !== 'main' || state.blocks[index-1]?.kind !== 'main'),
-      makeButton('↓', () => moveBlock(index, 1), index === state.blocks.length-1 || block.kind !== 'main' || state.blocks[index+1]?.kind !== 'main'),
-      makeButton('Дублювати', () => duplicateBlock(index), block.kind !== 'main'),
-      makeButton('Видалити', () => deleteBlock(index), block.kind !== 'main')
-    );
-    header.append(titleWrap, actions);
-    const textarea = document.createElement('textarea');
-    textarea.value = block.html;
-    const error = document.createElement('p'); error.className='block-error'; error.hidden=true;
+    const textarea = el('textarea', { value: block.html });
+    const error = el('p', { class: 'block-error', hidden: true });
+    const card = el('article', { class: 'block-card' });
+    const moveBlock = delta => { const t = index + delta; [state.blocks[index], state.blocks[t]] = [state.blocks[t], state.blocks[index]]; rebuildIndexFromBlocks(); render(); };
     textarea.addEventListener('input', () => {
       block.html = textarea.value;
       const message = validateBlockHtml(block);
       card.classList.toggle('is-invalid', Boolean(message));
       error.hidden = !message; error.textContent = message;
-      if (!message) { rebuildIndexHtml(); refreshDirtyState(); }
+      if (!message) { rebuildIndexFromBlocks(); refreshDirtyState(); }
     });
-    card.append(header, textarea, error);
+    const isMain = block.kind === 'main';
+    card.append(el('div', { class: 'block-card-header' },
+      el('div', {}, el('h3', { class: 'block-card-title', textContent: block.label }), el('div', { class: 'block-type', textContent: block.kind })),
+      el('div', { class: 'block-card-actions' },
+        button('↑', () => moveBlock(-1), { disabled: !isMain || state.blocks[index - 1]?.kind !== 'main' }),
+        button('↓', () => moveBlock(1), { disabled: !isMain || state.blocks[index + 1]?.kind !== 'main' }),
+        button('Дублювати', () => { state.blocks.splice(index + 1, 0, { ...block }); rebuildIndexFromBlocks(); render(); }, { disabled: !isMain }),
+        button('Видалити', () => { if (confirm('Видалити цей блок зі сторінки?')) { state.blocks.splice(index, 1); rebuildIndexFromBlocks(); render(); } }, { disabled: !isMain }))),
+      textarea, error);
     elements.fields.append(card);
   });
-  refreshDirtyState();
-}
-
-function moveBlock(index, delta) {
-  const target = index + delta;
-  [state.blocks[index], state.blocks[target]] = [state.blocks[target], state.blocks[index]];
-  rebuildIndexHtml(); renderBlocks();
-}
-function duplicateBlock(index) {
-  const clone = { ...state.blocks[index], label: `${state.blocks[index].label} (копія)` };
-  state.blocks.splice(index + 1, 0, clone); rebuildIndexHtml(); renderBlocks();
-}
-function deleteBlock(index) {
-  if (!confirm('Видалити цей блок зі сторінки?')) return;
-  state.blocks.splice(index, 1); rebuildIndexHtml(); renderBlocks();
 }
 function addBlock() {
-  const footerIndex = state.blocks.findIndex(b => b.kind === 'footer');
+  if (!state.indexHtml) return;
+  parseIndexBlocks();
   const number = state.blocks.filter(b => b.kind === 'main').length + 1;
-  const block = { kind: 'main', label: `Нова секція ${number}`, html: `<section class="section section-shell" id="new-section-${number}">\n  <div>\n    <p class="section-kicker">Новий блок</p>\n    <h2>Заголовок нового блоку</h2>\n    <p>Додайте свій HTML-контент.</p>\n  </div>\n</section>` };
-  state.blocks.splice(footerIndex >= 0 ? footerIndex : state.blocks.length, 0, block); rebuildIndexHtml(); renderBlocks();
+  const footerIndex = state.blocks.findIndex(b => b.kind === 'footer');
+  state.blocks.splice(footerIndex >= 0 ? footerIndex : state.blocks.length, 0, { kind: 'main', label: 'Нова секція', html: `<section class="section section-shell" id="new-section-${number}">\n  <div>\n    <p class="section-kicker">Новий блок</p>\n    <h2>Заголовок нового блоку</h2>\n    <p>Додайте свій HTML-контент.</p>\n  </div>\n</section>` });
+  rebuildIndexFromBlocks(); render();
 }
 
-function setEditorMode(mode) {
-  state.mode = mode;
-  const text = mode === 'text';
-  elements.textMode.classList.toggle('is-active', text);
-  elements.blocksMode.classList.toggle('is-active', !text);
-  elements.textMode.setAttribute('aria-selected', String(text));
-  elements.blocksMode.setAttribute('aria-selected', String(!text));
-  elements.textControls.hidden = !text;
-  elements.blocksControls.hidden = text;
-  elements.search.disabled = !text;
-  if (text) { elements.workspaceTitle.textContent='Текст сайту'; renderFields(); } else renderBlocks();
+/* ---------- preview ---------- */
+function openPreview(lang) {
+  if (!state.indexHtml) return;
+  const base = new URL('.', location.href).href;
+  const uploads = Object.fromEntries(Object.entries(state.uploads).map(([path, file]) => [path, file.dataUrl]));
+  const payload = JSON.stringify({ t: state.data[lang], u: uploads }).replace(/</g, '\\u003c');
+  const inline = `<script>(function(){const P=${payload};const T=P.t;document.documentElement.lang=T.lang;document.title='Перегляд · '+T.title;
+Object.entries(T.text).forEach(([k,v])=>{let n=document.querySelectorAll('[data-i18n="'+CSS.escape(k)+'"]');if(!n.length){try{n=[document.querySelector(k)].filter(Boolean)}catch(e){n=[]}}n.forEach(x=>{x.innerHTML=v})});
+document.querySelectorAll('img[src],a[href]').forEach(x=>{const a=x.tagName==='IMG'?'src':'href';const v=x.getAttribute(a);if(P.u[v])x.setAttribute(a,P.u[v])});
+document.querySelectorAll('[data-lang]').forEach(b=>{b.classList.toggle('active',b.dataset.lang===T.lang);b.disabled=true;b.title='У перегляді мову змінюють кнопками в редакторі'});
+document.querySelectorAll('[data-email]').forEach(a=>{let e='';try{e=atob(a.dataset.email).split('').reverse().join('')}catch(x){}if(!e)return;a.href='mailto:'+e;if(a.hasAttribute('data-contact-text'))a.textContent=e+' ↗'});
+const y=document.getElementById('year');if(y)y.textContent=new Date().getFullYear();
+const bar=document.createElement('div');bar.textContent='ПОПЕРЕДНІЙ ПЕРЕГЛЯД · ще не опубліковано';bar.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99;padding:8px;text-align:center;background:#45e0c0;color:#04130f;font:800 12px/1.4 sans-serif;letter-spacing:.1em';document.body.append(bar);})();<\/script>`;
+  const html = state.indexHtml
+    .replace(/<head>/i, `<head><base href="${base}">`)
+    .replace(/<script src="script\.js[^"]*"><\/script>/i, inline);
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const win = window.open(url, '_blank');
+  if (!win) setStatus('Браузер заблокував нову вкладку. Дозвольте спливаючі вікна для цього сайту.', 'error');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
-function renderFields() {
-  const language = elements.language.value;
-  const data = state.data[language];
-  elements.languageLabel.textContent = language === 'uk' ? 'Українська' : 'English';
-  elements.fields.innerHTML = '';
-
-  if (!data) {
-    elements.fields.innerHTML = '<div class="empty-editor-state"><p>Підключіться до GitHub або завантажте локальні JSON.</p></div>';
-    refreshDirtyState();
-    return;
-  }
-
-  let lastGroup = '';
-  for (const { keys, displayPath, value } of flattenObject(data)) {
-    const group = keys[0];
-    if (group !== lastGroup) {
-      const title = document.createElement('h3');
-      title.className = 'field-group-title';
-      title.textContent = group === 'text' ? 'Текст сторінки' : group === 'labels' ? 'Підписи доступності' : 'Основні параметри';
-      elements.fields.appendChild(title);
-      lastGroup = group;
-    }
-
-    const card = document.createElement('article');
-    card.className = 'field-card';
-    card.dataset.search = `${displayPath} ${value}`.toLowerCase();
-
-    const header = document.createElement('div');
-    header.className = 'field-card-header';
-    const heading = document.createElement('h3');
-    heading.textContent = fieldLabel(keys);
-    const code = document.createElement('code');
-    code.textContent = displayPath;
-    header.append(heading, code);
-
-    const input = keys.length === 1 && keys[0] === 'lang' ? document.createElement('input') : document.createElement('textarea');
-    input.value = value;
-    input.dataset.keys = JSON.stringify(keys);
-    if (value.length > 180) input.classList.add('is-long');
-    input.addEventListener('input', () => {
-      try {
-        setByKeys(state.data[language], keys, input.value);
-        card.dataset.search = `${displayPath} ${input.value}`.toLowerCase();
-        refreshDirtyState();
-      } catch (error) {
-        setStatus(error.message, 'error');
-      }
-    });
-
-    card.append(header, input);
-    elements.fields.appendChild(card);
-  }
-
-  applySearch();
-  refreshDirtyState();
-}
-
-function applySearch() {
-  const query = elements.search.value.trim().toLowerCase();
-  document.querySelectorAll('.field-card').forEach(card => {
-    card.hidden = Boolean(query) && !card.dataset.search.includes(query);
-  });
+/* ---------- load / publish ---------- */
+function loadState(uk, en, indexHtml) {
+  state.data = { uk, en };
+  state.originals = { uk: deepClone(uk), en: deepClone(en) };
+  state.indexHtml = indexHtml;
+  state.indexOriginal = indexHtml;
+  state.uploads = {};
+  if (!indexHtml.includes('data-item=')) setStatus('Увага: index.html має стару структуру без списків. Режим «Списки» може не працювати.', 'error');
+  render();
 }
 
 function inferGitHubPagesRepository() {
@@ -414,152 +533,89 @@ function inferGitHubPagesRepository() {
   if (!host.endsWith('.github.io')) return;
   const owner = host.replace(/\.github\.io$/, '');
   const firstPath = location.pathname.split('/').filter(Boolean)[0] || '';
-  const repo = firstPath && !firstPath.endsWith('.html') ? firstPath : `${owner}.github.io`;
-
   if (!elements.owner.value) elements.owner.value = owner;
-  if (!elements.repo.value) elements.repo.value = repo;
+  if (!elements.repo.value) elements.repo.value = firstPath && firstPath !== 'editor.html' ? firstPath : `${owner}.github.io`;
 }
-
 function restoreSettings() {
   inferGitHubPagesRepository();
-  const fields = ['owner', 'repo', 'branch', 'basePath'];
-  for (const field of fields) {
+  ['owner', 'repo', 'branch', 'basePath'].forEach(field => {
     const saved = localStorage.getItem(`github-editor-${field}`);
-    if (saved) elements[field].value = saved;
-  }
-  const token = sessionStorage.getItem('github-editor-token');
-  if (token) elements.token.value = token;
+    if (saved !== null && saved !== '') elements[field].value = saved;
+  });
+  if (!elements.owner.value) elements.owner.value = 'jobsearchdev';
+  if (!elements.repo.value) elements.repo.value = 'index.html';
+  const remembered = localStorage.getItem('github-editor-token');
+  elements.token.value = remembered || sessionStorage.getItem('github-editor-token') || '';
+  elements.remember.checked = Boolean(remembered);
 }
-
 function persistSettings(config) {
-  localStorage.setItem('github-editor-owner', config.owner);
-  localStorage.setItem('github-editor-repo', config.repo);
-  localStorage.setItem('github-editor-branch', config.branch);
-  localStorage.setItem('github-editor-basePath', config.basePath);
+  ['owner', 'repo', 'branch', 'basePath'].forEach(field => localStorage.setItem(`github-editor-${field}`, config[field]));
   sessionStorage.setItem('github-editor-token', config.token);
-}
-
-async function verifyConnection(config) {
-  const account = await githubRequest('https://api.github.com/user', {}, 'перевірити token', config);
-  const repo = await githubRequest(repoApiBase(config), {}, 'відкрити репозиторій', config);
-  await githubRequest(`${repoApiBase(config)}/branches/${encodeURIComponent(config.branch)}`, {}, 'знайти гілку', config);
-  return { account, repo };
-}
-
-async function loadIndexFromGitHub(config) {
-  const path = indexFilePath(config);
-  const payload = await githubRequest(`${indexEndpoint(config)}?ref=${encodeURIComponent(config.branch)}`, {}, `завантажити ${path}`, config);
-  if (payload.type !== 'file' || !payload.content) throw new Error(`${path} не є звичайним HTML-файлом.`);
-  return base64ToUtf8(payload.content);
-}
-
-async function loadLanguageFromGitHub(language, config) {
-  const url = `${contentEndpoint(language, config)}?ref=${encodeURIComponent(config.branch)}`;
-  const payload = await githubRequest(url, {}, `завантажити ${filePath(language, config)}`, config);
-  if (payload.type !== 'file' || !payload.content) throw new Error(`${filePath(language, config)} не є звичайним JSON-файлом.`);
-  try {
-    return JSON.parse(base64ToUtf8(payload.content));
-  } catch (error) {
-    throw new Error(`У ${filePath(language, config)} некоректний JSON: ${error.message}`);
-  }
+  if (elements.remember.checked) localStorage.setItem('github-editor-token', config.token);
+  else localStorage.removeItem('github-editor-token');
 }
 
 async function connectAndLoad() {
   const config = getConfig();
+  if (isDirty() && !confirm('Є неопубліковані зміни. Перезавантажити файли з GitHub і втратити їх?')) return;
   try {
     validateConfig(config);
     elements.connect.disabled = true;
-    elements.publish.disabled = true;
-    setStatus('Перевіряю token, репозиторій і гілку…');
-
-    const { account, repo } = await verifyConnection(config);
-    setStatus('Завантажую український та англійський файли…');
-    const [uk, en, indexHtml] = await Promise.all([
-      loadLanguageFromGitHub('uk', config),
-      loadLanguageFromGitHub('en', config),
-      loadIndexFromGitHub(config)
-    ]);
-
-    state.account = account;
-    state.repo = repo;
-    state.data.uk = uk;
-    state.data.en = en;
-    state.originals.uk = deepClone(uk);
-    state.originals.en = deepClone(en);
-    state.indexHtml = indexHtml;
-    state.indexOriginal = indexHtml;
-    parseIndexBlocks(indexHtml);
+    setStatus('Перевіряю token і репозиторій…');
+    const account = await githubRequest('https://api.github.com/user', {}, 'перевірити token', config);
+    await githubRequest(repoApiBase(config), {}, 'відкрити репозиторій', config);
+    setStatus('Завантажую файли сайту…');
+    const [ukFile, enFile, indexFile] = await Promise.all([getFile('locales/uk.json', config), getFile('locales/en.json', config), getFile('index.html', config)]);
+    const parse = (file, name) => { try { return JSON.parse(base64ToUtf8(file.content)); } catch (e) { throw new Error(`У ${name} некоректний JSON: ${e.message}`); } };
     state.connected = true;
     persistSettings(config);
-
     elements.connectionInfo.textContent = `${account.login} → ${config.owner}/${config.repo} · ${config.branch}`;
-    state.mode === 'text' ? renderFields() : renderBlocks();
-    setStatus(`Підключено. Мовні файли та index.html завантажено.`, 'success');
+    setStatus('Підключено. Файли завантажено.', 'success');
+    loadState(parse(ukFile, 'uk.json'), parse(enFile, 'en.json'), base64ToUtf8(indexFile.content));
   } catch (error) {
     state.connected = false;
     elements.connectionInfo.textContent = 'Не підключено';
-    refreshDirtyState();
     setStatus(error.message, 'error');
+    refreshDirtyState();
   } finally {
     elements.connect.disabled = false;
   }
 }
 
 async function loadLocalFiles() {
+  if (isDirty() && !confirm('Є неопубліковані зміни. Завантажити файли заново і втратити їх?')) return;
   try {
-    setStatus('Завантажую локальні мовні файли…');
-    const responses = await Promise.all([
-      ...LANGUAGES.map(language => fetch(`locales/${language}.json`, { cache: 'no-store' })),
-      fetch('index.html', { cache: 'no-store' })
-    ]);
-    if (responses.some(response => !response.ok)) throw new Error('Не вдалося відкрити локальні JSON. Відкрийте редактор через GitHub Pages або локальний сервер.');
+    setStatus('Завантажую локальні файли…');
+    const responses = await Promise.all(['locales/uk.json', 'locales/en.json', 'index.html'].map(path => fetch(path, { cache: 'no-store' })));
+    if (responses.some(r => !r.ok)) throw new Error('Не вдалося відкрити файли. Відкрийте редактор через сайт або локальний сервер.');
     const [uk, en, indexHtml] = await Promise.all([responses[0].json(), responses[1].json(), responses[2].text()]);
-    state.data.uk = uk;
-    state.data.en = en;
-    state.originals.uk = deepClone(uk);
-    state.originals.en = deepClone(en);
-    state.indexHtml = indexHtml; state.indexOriginal = indexHtml; parseIndexBlocks(indexHtml);
-    state.mode === 'text' ? renderFields() : renderBlocks();
-    setStatus(state.connected ? 'Локальні файли завантажено. Публікація піде в підключений репозиторій.' : 'Локальні файли завантажено. Для публікації підключіться до GitHub.', 'success');
-  } catch (error) {
-    setStatus(error.message, 'error');
-  }
+    loadState(uk, en, indexHtml);
+    setStatus(state.connected ? 'Файли сайту завантажено. Публікація піде в підключений репозиторій.' : 'Файли завантажено. Для публікації підключіться до GitHub.', 'success');
+  } catch (error) { setStatus(error.message, 'error'); }
 }
 
-async function getCurrentFile(language, config) {
-  const url = `${contentEndpoint(language, config)}?ref=${encodeURIComponent(config.branch)}`;
-  const payload = await githubRequest(url, {}, `прочитати актуальний ${filePath(language, config)}`, config);
-  if (!payload.sha) throw new Error(`GitHub не повернув SHA для ${filePath(language, config)}.`);
-  return payload;
+function missingRequired() {
+  const doc = parseDoc();
+  const problems = [];
+  LISTS.forEach(def => {
+    (readItems(def, doc) || []).forEach((item, i) => def.fields.filter(f => !f.optional).forEach(f => LANGUAGES.forEach(lang => {
+      if (!String(item[lang][f.name] || '').trim()) problems.push(`${def.title} №${i + 1}: «${f.label}» (${lang.toUpperCase()})`);
+    })));
+  });
+  return problems;
 }
 
-async function publishLanguage(language, config) {
-  const current = await getCurrentFile(language, config);
-  const content = `${JSON.stringify(state.data[language], null, 2)}\n`;
-  const body = {
-    message: `Update ${language.toUpperCase()} website content`,
-    content: utf8ToBase64(content),
-    branch: config.branch,
-    sha: current.sha
-  };
-
-  await githubRequest(contentEndpoint(language, config), {
-    method: 'PUT',
-    body: JSON.stringify(body)
-  }, `опублікувати ${filePath(language, config)}`, config);
-
-  state.originals[language] = deepClone(state.data[language]);
-}
-
-
-async function publishIndex(config) {
-  const current = await githubRequest(`${indexEndpoint(config)}?ref=${encodeURIComponent(config.branch)}`, {}, `прочитати актуальний ${indexFilePath(config)}`, config);
-  if (!current.sha) throw new Error(`GitHub не повернув SHA для ${indexFilePath(config)}.`);
-  await githubRequest(indexEndpoint(config), {
-    method: 'PUT',
-    body: JSON.stringify({ message: 'Update website page blocks', content: utf8ToBase64(state.indexHtml), branch: config.branch, sha: current.sha })
-  }, `опублікувати ${indexFilePath(config)}`, config);
-  state.indexOriginal = state.indexHtml;
+// Дата «Інформацію оновлено» на сайті ставиться автоматично під час кожної публікації.
+function stampUpdated() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const iso = `${now.getFullYear()}-${mm}-${dd}`;
+  if (!state.indexHtml.includes('data-updated') || state.indexHtml.includes(`datetime="${iso}"`)) return;
+  mutateDoc(doc => doc.querySelectorAll('time[data-updated]').forEach(node => {
+    node.setAttribute('datetime', iso);
+    node.textContent = `${dd}.${mm}.${now.getFullYear()}`;
+  }));
 }
 
 async function publishChanges() {
@@ -567,88 +623,79 @@ async function publishChanges() {
   try {
     validateConfig(config);
     if (!state.connected) throw new Error('Спочатку натисніть «Підключитися та завантажити».');
-
-    const changed = LANGUAGES.filter(language => state.data[language] && JSON.stringify(state.data[language]) !== JSON.stringify(state.originals[language]));
-    const indexChanged = isIndexDirty();
-    if (!changed.length && !indexChanged) {
-      setStatus('Немає змін для публікації.');
-      return;
-    }
-
-    const changedLabels = [...changed.map(language => language.toUpperCase()), ...(indexChanged ? ['index.html'] : [])];
-    if (!confirm(`Опублікувати зміни: ${changedLabels.join(', ')}?`)) return;
-
+    const changedLangs = LANGUAGES.filter(languageDirty);
+    const uploads = Object.keys(state.uploads);
+    if (!changedLangs.length && !indexDirty() && !uploads.length) return setStatus('Немає змін для публікації.');
+    stampUpdated();
+    const problems = missingRequired();
+    if (problems.length && !confirm(`Незаповнені поля (на сайті там буде порожньо):\n${problems.slice(0, 12).join('\n')}${problems.length > 12 ? `\n…ще ${problems.length - 12}` : ''}\n\nВсе одно опублікувати?`)) return;
+    const labels = [...uploads.map(p => p.split('/').pop()), ...(indexDirty() ? ['index.html'] : []), ...changedLangs.map(l => `${l}.json`)];
+    if (!confirm(`Опублікувати на GitHub:\n${labels.join('\n')}?`)) return;
     elements.publish.disabled = true;
-    if (indexChanged) { setStatus('Публікую index.html…'); await publishIndex(config); }
-    for (const language of changed) {
-      setStatus(`Публікую ${language.toUpperCase()}…`);
-      await publishLanguage(language, config);
+    for (const path of uploads) {
+      setStatus(`Завантажую ${path}…`);
+      await putFile(path, state.uploads[path].base64, `Add ${path}`, config);
+      delete state.uploads[path];
     }
-
-    state.mode === 'text' ? renderFields() : renderBlocks();
-    setStatus('Зміни опубліковано. GitHub Pages оновиться після завершення deployment.', 'success');
+    if (indexDirty()) {
+      setStatus('Публікую index.html…');
+      await putFile('index.html', utf8ToBase64(state.indexHtml), 'Update website page', config);
+      state.indexOriginal = state.indexHtml;
+    }
+    for (const lang of changedLangs) {
+      setStatus(`Публікую ${lang}.json…`);
+      await putFile(`locales/${lang}.json`, utf8ToBase64(`${JSON.stringify(state.data[lang], null, 2)}\n`), `Update ${lang.toUpperCase()} website content`, config);
+      state.originals[lang] = deepClone(state.data[lang]);
+    }
+    render();
+    setStatus('Опубліковано. Сайт оновиться за 1–2 хвилини (оновіть сторінку з Cmd+Shift+R).', 'success');
   } catch (error) {
-    setStatus(error.message, 'error');
+    setStatus(`${error.message} Нічого не втрачено: зміни залишились у редакторі, можна повторити.`, 'error');
   } finally {
     refreshDirtyState();
   }
 }
 
-function downloadCurrentLanguage() {
-  if (state.mode === 'blocks') {
-    if (!state.indexHtml) return setStatus('Немає index.html для завантаження.', 'error');
-    const blob = new Blob([state.indexHtml], { type: 'text/html' });
-    const link = document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='index.html'; link.click(); URL.revokeObjectURL(link.href);
-    return;
-  }
-  const language = elements.language.value;
-  if (!state.data[language]) return setStatus('Немає даних для завантаження.', 'error');
-  const blob = new Blob([`${JSON.stringify(state.data[language], null, 2)}\n`], { type: 'application/json' });
-  const link = document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=`${language}.json`; link.click(); URL.revokeObjectURL(link.href);
+function downloadFiles() {
+  if (!state.indexHtml) return setStatus('Немає даних для збереження.', 'error');
+  const save = (content, name, type) => {
+    const link = el('a', { href: URL.createObjectURL(new Blob([content], { type })), download: name });
+    link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  };
+  save(state.indexHtml, 'index.html', 'text/html');
+  LANGUAGES.forEach(lang => save(`${JSON.stringify(state.data[lang], null, 2)}\n`, `${lang}.json`, 'application/json'));
+  Object.entries(state.uploads).forEach(([path, file]) => { const link = el('a', { href: file.dataUrl, download: path.split('/').pop() }); link.click(); });
+  setStatus('Файли збережено в «Завантаження». index.html — у корінь сайту, uk.json і en.json — у папку locales, картинки — у certificates.', 'success');
 }
 
 function resetChanges() {
-  if (state.mode === 'blocks') {
-    if (!state.indexOriginal) return;
-    if (!confirm('Скасувати незбережені зміни index.html?')) return;
-    state.indexHtml = state.indexOriginal; parseIndexBlocks(state.indexHtml); renderBlocks(); setStatus('Зміни index.html скасовано.'); return;
-  }
-  const language = elements.language.value;
-  if (!state.originals[language]) return;
-  if (!confirm(`Скасувати незбережені зміни для ${language.toUpperCase()}?`)) return;
-  state.data[language] = deepClone(state.originals[language]);
-  renderFields();
-  setStatus('Незбережені зміни скасовано.');
+  if (!state.indexOriginal || !isDirty()) return;
+  if (!confirm('Скасувати всі неопубліковані зміни?')) return;
+  loadState(state.originals.uk, state.originals.en, state.indexOriginal);
+  setStatus('Зміни скасовано.');
 }
 
 async function copyDiagnostics() {
   if (!state.lastDiagnostics) return;
-  try {
-    await navigator.clipboard.writeText(state.lastDiagnostics);
-    setStatus('Діагностику скопійовано.', 'success');
-  } catch {
-    setStatus('Не вдалося скопіювати діагностику. Скопіюйте її з консолі браузера.', 'error');
-    console.info(state.lastDiagnostics);
-  }
+  try { await navigator.clipboard.writeText(state.lastDiagnostics); setStatus('Діагностику скопійовано.', 'success'); }
+  catch { setStatus('Не вдалося скопіювати діагностику.', 'error'); console.info(state.lastDiagnostics); }
 }
 
+/* ---------- events ---------- */
 elements.connect.addEventListener('click', connectAndLoad);
 elements.publish.addEventListener('click', publishChanges);
+elements.previewUk.addEventListener('click', () => openPreview('uk'));
+elements.previewEn.addEventListener('click', () => openPreview('en'));
 elements.loadLocal.addEventListener('click', loadLocalFiles);
-elements.download.addEventListener('click', downloadCurrentLanguage);
+elements.download.addEventListener('click', downloadFiles);
 elements.reset.addEventListener('click', resetChanges);
 elements.copyDiagnostics.addEventListener('click', copyDiagnostics);
-elements.language.addEventListener('change', renderFields);
-elements.textMode.addEventListener('click', () => setEditorMode('text'));
-elements.blocksMode.addEventListener('click', () => setEditorMode('blocks'));
 elements.addBlock.addEventListener('click', addBlock);
 elements.search.addEventListener('input', applySearch);
-window.addEventListener('beforeunload', event => {
-  if (isDirty()) {
-    event.preventDefault();
-    event.returnValue = '';
-  }
-});
+elements.remember.addEventListener('change', () => { if (!elements.remember.checked) localStorage.removeItem('github-editor-token'); });
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => setEditorMode(b.dataset.mode)));
+window.addEventListener('beforeunload', event => { if (isDirty()) { event.preventDefault(); event.returnValue = ''; } });
 
 restoreSettings();
-refreshDirtyState();
+renderListPicker();
+setEditorMode('lists');
