@@ -9,6 +9,14 @@
   const t = (item, field) => item.uk[field] ?? '';
   const k = (item, field) => `${item.id}.${field}`;
 
+  // Посилання на GitHub підписується «Відкрити на GitHub», будь-яке інше — «Відкрити сайт».
+  const projectLink = (url, ctx) => {
+    if (!url) return '';
+    const key = /github\.com/i.test(url) ? 'projects.link' : 'projects.siteLink';
+    const fallback = key === 'projects.link' ? 'Відкрити на GitHub ↗' : 'Відкрити сайт ↗';
+    return `<a class="project-link" href="${esc(url)}" target="_blank" rel="noopener" data-i18n="${key}">${ctx.uk(key) || fallback}</a>`;
+  };
+
   const LISTS = [
     {
       key: 'experience', title: 'Досвід роботи', container: '.timeline', prefix: 'exp',
@@ -28,8 +36,8 @@
         { name: 'title', label: 'Назва' },
         { name: 'desc', label: 'Опис', multiline: true }
       ],
-      attrs: [{ name: 'url', label: 'Посилання (GitHub тощо)', type: 'url' }],
-      render: (item, ctx) => `<article class="project-card" data-item="${item.id}" data-url="${esc(item.attrs.url)}"><p class="project-tag" data-i18n="${k(item, 'tag')}">${t(item, 'tag')}</p><h3 data-i18n="${k(item, 'title')}">${t(item, 'title')}</h3><p class="project-desc" data-i18n="${k(item, 'desc')}">${t(item, 'desc')}</p><a class="project-link" href="${esc(item.attrs.url)}" target="_blank" rel="noopener" data-i18n="projects.link">${ctx.uk('projects.link') || 'Відкрити на GitHub ↗'}</a></article>`
+      attrs: [{ name: 'url', label: 'Посилання (GitHub тощо). Порожнє — кнопки не буде (для проєктів під NDA)', type: 'url', optional: true }],
+      render: (item, ctx) => `<article class="project-card" data-item="${item.id}" data-url="${esc(item.attrs.url)}"><p class="project-tag" data-i18n="${k(item, 'tag')}">${t(item, 'tag')}</p><h3 data-i18n="${k(item, 'title')}">${t(item, 'title')}</h3><p class="project-desc" data-i18n="${k(item, 'desc')}">${t(item, 'desc')}</p>${projectLink(item.attrs.url, ctx)}</article>`
     },
     {
       key: 'certificates', title: 'Сертифікати', container: '.cert-grid', prefix: 'cert',
@@ -82,6 +90,7 @@
 
   const CONTACTS = [
     { name: 'email', label: 'Email (на сторінці зберігається закодованим, щоб його не збирали боти)', read: doc => { const node = doc.querySelector('[data-contact="email"]'); return node?.dataset.email ? decodeEmail(node.dataset.email) : (node?.getAttribute('href') || '').replace(/^mailto:/, ''); } },
+    { name: 'telegram', label: 'Telegram (посилання, напр. https://t.me/імʼя)', read: doc => doc.querySelector('[data-contact="telegram"]')?.getAttribute('href') || '' },
     { name: 'linkedin', label: 'LinkedIn (посилання)', read: doc => doc.querySelector('[data-contact="linkedin"]')?.getAttribute('href') || '' },
     { name: 'github', label: 'GitHub (посилання)', read: doc => doc.querySelector('[data-contact="github"]')?.getAttribute('href') || '' }
   ];

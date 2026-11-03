@@ -356,6 +356,9 @@ function keyLabel(key) {
   const parts = key.split('.');
   const last = parts.at(-1);
   if (key === 'certs.verify') return 'Текст кнопки «Перевірити» в усіх сертифікатах';
+  if (key === 'cv.file') return 'Файл CV: шлях (cv/назва.pdf) або посилання';
+  if (key === 'cv.button') return 'Кнопка «Завантажити CV»';
+  if (key === 'cv.link') return 'Посилання на CV у контактах';
   if (parts[0] === 'facts') return `Факт ${parts[1]}: ${KEY_NAMES[last] || last}`;
   return KEY_NAMES[last] || key;
 }
@@ -366,7 +369,7 @@ function renderTexts() {
   const doc = parseDoc();
   const itemIds = new Set([...doc.querySelectorAll('[data-item]')].map(n => n.dataset.item));
   const keys = [...new Set([...Object.keys(text('uk')), ...Object.keys(text('en'))])].filter(key => !itemIds.has(key.split('.')[0]));
-  const nodes = new Map(keys.map(key => [key, doc.querySelector(`[data-i18n="${CSS.escape(key)}"]`)]));
+  const nodes = new Map(keys.map(key => [key, doc.querySelector(`[data-i18n="${CSS.escape(key)}"]`) || doc.querySelector(`[data-i18n-href="${CSS.escape(key)}"]`)]));
   const all = [...doc.querySelectorAll('*')];
   const position = key => { const node = nodes.get(key); return node ? all.indexOf(node) : Infinity; };
   keys.sort((a, b) => position(a) - position(b));
@@ -382,7 +385,10 @@ function renderTexts() {
     if (!groups.has(group)) groups.set(group, []);
     groups.get(group).push(fieldCard(group, keyLabel(key), lang => text(lang)[key] ?? '', (lang, value) => {
       text(lang)[key] = value;
-      if (lang === 'uk') mutateDoc(d => d.querySelectorAll(`[data-i18n="${CSS.escape(key)}"]`).forEach(n => { n.innerHTML = value; }));
+      if (lang === 'uk') mutateDoc(d => {
+        d.querySelectorAll(`[data-i18n="${CSS.escape(key)}"]`).forEach(n => { n.innerHTML = value; });
+        d.querySelectorAll(`[data-i18n-href="${CSS.escape(key)}"]`).forEach(n => n.setAttribute('href', value));
+      });
     }, key));
   });
   groups.forEach((cards, name) => {
@@ -503,6 +509,7 @@ function openPreview(lang) {
   const payload = JSON.stringify({ t: state.data[lang], u: uploads }).replace(/</g, '\\u003c');
   const inline = `<script>(function(){const P=${payload};const T=P.t;document.documentElement.lang=T.lang;document.title='Перегляд · '+T.title;
 Object.entries(T.text).forEach(([k,v])=>{let n=document.querySelectorAll('[data-i18n="'+CSS.escape(k)+'"]');if(!n.length){try{n=[document.querySelector(k)].filter(Boolean)}catch(e){n=[]}}n.forEach(x=>{x.innerHTML=v})});
+document.querySelectorAll('[data-i18n-href]').forEach(x=>{const v=T.text[x.dataset.i18nHref];if(v)x.setAttribute('href',v)});
 document.querySelectorAll('img[src],a[href]').forEach(x=>{const a=x.tagName==='IMG'?'src':'href';const v=x.getAttribute(a);if(P.u[v])x.setAttribute(a,P.u[v])});
 document.querySelectorAll('[data-lang]').forEach(b=>{b.classList.toggle('active',b.dataset.lang===T.lang);b.disabled=true;b.title='У перегляді мову змінюють кнопками в редакторі'});
 document.querySelectorAll('[data-email]').forEach(a=>{let e='';try{e=atob(a.dataset.email).split('').reverse().join('')}catch(x){}if(!e)return;a.href='mailto:'+e;if(a.hasAttribute('data-contact-text'))a.textContent=e+' ↗'});

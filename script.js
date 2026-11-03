@@ -56,6 +56,12 @@ async function setLanguage(language) {
     nodes.forEach((node) => { node.innerHTML = value; });
   });
 
+  // Посилання, що залежать від мови (наприклад, файл CV): data-i18n-href="ключ".
+  document.querySelectorAll('[data-i18n-href]').forEach((link) => {
+    const href = selected.text[link.dataset.i18nHref];
+    if (href) link.setAttribute('href', href);
+  });
+
   document.querySelectorAll('[data-lang]').forEach((button) => {
     const active = button.dataset.lang === selected.lang;
     button.classList.toggle('active', active);

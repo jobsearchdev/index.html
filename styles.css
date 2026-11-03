@@ -8,3 +8,7 @@
 .status .status-text{font-style:normal}.timeline h3 .role{color:inherit;font-weight:inherit}
 
 .updated{margin:22px 0 0;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}.updated time{color:var(--accent)}
+
+.doc-links{display:block;margin-top:10px;font-size:14px}.doc-links a,.reco-card a{color:var(--accent);text-decoration:none;font-weight:700}.doc-links a:hover,.reco-card a:hover{text-decoration:underline}
+.reco-card{margin:0;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);padding:34px 38px}.reco-card blockquote{margin:0 0 22px;font-size:19px;line-height:1.65;color:var(--text)}.reco-card blockquote small{display:block;margin-top:10px;font-size:12px;color:var(--muted)}.reco-card figcaption{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;color:var(--muted);font-size:14px}.reco-card figcaption strong{color:var(--text);font-size:16px}
+@media(max-width:620px){.reco-card{padding:24px 20px}.reco-card blockquote{font-size:17px}}
