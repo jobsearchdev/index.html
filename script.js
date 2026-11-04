@@ -88,6 +88,12 @@ document.querySelectorAll('[data-email]').forEach((link) => {
   if (link.hasAttribute('data-contact-text')) link.textContent = `${email} ↗`;
 });
 
+// Кнопка «Показати всі сертифікати»: спершу видно 8 карток.
+document.querySelector('.cert-more')?.addEventListener('click', (event) => {
+  document.querySelector('.cert-grid')?.classList.remove('is-collapsed');
+  event.currentTarget.remove();
+});
+
 let savedLanguage = null;
 try { savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY); } catch {}
 setLanguage(savedLanguage || DEFAULT_LANGUAGE);

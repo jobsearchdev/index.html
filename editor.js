@@ -243,7 +243,7 @@ function renderLists() {
 }
 
 function renderItemCard(def, item, index) {
-  const firstField = def.fields[0].name;
+  const firstField = def.fields.some(f => f.name === 'role') ? 'role' : def.fields[0].name;
   const heading = el('h3', { class: 'item-title', textContent: plain(item.uk[firstField]) || plain(item.uk[def.fields[1]?.name]) || 'Новий пункт' });
   const move = delta => {
     const target = index + delta;
@@ -513,6 +513,7 @@ document.querySelectorAll('[data-i18n-href]').forEach(x=>{const v=T.text[x.datas
 document.querySelectorAll('img[src],a[href]').forEach(x=>{const a=x.tagName==='IMG'?'src':'href';const v=x.getAttribute(a);if(P.u[v])x.setAttribute(a,P.u[v])});
 document.querySelectorAll('[data-lang]').forEach(b=>{b.classList.toggle('active',b.dataset.lang===T.lang);b.disabled=true;b.title='У перегляді мову змінюють кнопками в редакторі'});
 document.querySelectorAll('[data-email]').forEach(a=>{let e='';try{e=atob(a.dataset.email).split('').reverse().join('')}catch(x){}if(!e)return;a.href='mailto:'+e;if(a.hasAttribute('data-contact-text'))a.textContent=e+' ↗'});
+document.querySelector('.cert-more')?.addEventListener('click',e=>{document.querySelector('.cert-grid')?.classList.remove('is-collapsed');e.currentTarget.remove()});
 const y=document.getElementById('year');if(y)y.textContent=new Date().getFullYear();
 const bar=document.createElement('div');bar.textContent='ПОПЕРЕДНІЙ ПЕРЕГЛЯД · ще не опубліковано';bar.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99;padding:8px;text-align:center;background:#45e0c0;color:#04130f;font:800 12px/1.4 sans-serif;letter-spacing:.1em';document.body.append(bar);})();<\/script>`;
   const html = state.indexHtml
