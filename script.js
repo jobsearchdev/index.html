@@ -94,6 +94,14 @@ document.querySelector('.cert-more')?.addEventListener('click', (event) => {
   event.currentTarget.remove();
 });
 
+document.querySelectorAll('[data-phone]').forEach((link) => {
+  let phone = '';
+  try { phone = atob(link.dataset.phone).split('').reverse().join(''); } catch { return; }
+  if (!phone) return;
+  link.setAttribute('href', `tel:${phone.replace(/[^+\d]/g, '')}`);
+  if (link.hasAttribute('data-contact-text')) link.textContent = phone.replace(/^\+380(\d{2})(\d{3})(\d{2})(\d{2})$/, '+380 $1 $2 $3 $4');
+});
+
 let savedLanguage = null;
 try { savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY); } catch {}
 setLanguage(savedLanguage || DEFAULT_LANGUAGE);

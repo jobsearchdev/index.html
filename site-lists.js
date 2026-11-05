@@ -90,6 +90,7 @@
 
   const CONTACTS = [
     { name: 'email', label: 'Email (на сторінці зберігається закодованим, щоб його не збирали боти)', read: doc => { const node = doc.querySelector('[data-contact="email"]'); return node?.dataset.email ? decodeEmail(node.dataset.email) : (node?.getAttribute('href') || '').replace(/^mailto:/, ''); } },
+    { name: 'phone', label: 'Телефон (на сторінці зберігається закодованим)', read: doc => { const node = doc.querySelector('[data-contact="phone"]'); return node?.dataset.phone ? decodeEmail(node.dataset.phone) : ''; } },
     { name: 'telegram', label: 'Telegram (посилання, напр. https://t.me/імʼя)', read: doc => doc.querySelector('[data-contact="telegram"]')?.getAttribute('href') || '' },
     { name: 'linkedin', label: 'LinkedIn (посилання)', read: doc => doc.querySelector('[data-contact="linkedin"]')?.getAttribute('href') || '' },
     { name: 'github', label: 'GitHub (посилання)', read: doc => doc.querySelector('[data-contact="github"]')?.getAttribute('href') || '' }
@@ -101,10 +102,10 @@
 
   function applyContact(doc, name, value) {
     doc.querySelectorAll(`[data-contact="${name}"]`).forEach(el => {
-      if (name === 'email') {
+      if (name === 'email' || name === 'phone') {
         el.setAttribute('href', '#contact');
-        el.setAttribute('data-email', encodeEmail(value));
-        if (el.hasAttribute('data-contact-text')) el.textContent = 'Email ↗';
+        el.setAttribute(name === 'email' ? 'data-email' : 'data-phone', encodeEmail(value));
+        if (el.hasAttribute('data-contact-text')) el.textContent = name === 'email' ? 'Email ↗' : 'Phone ↗';
       } else {
         el.setAttribute('href', value);
       }
